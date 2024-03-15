@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 	"vetner360-backend/controller"
 	"vetner360-backend/database"
 	routes "vetner360-backend/route"
@@ -11,8 +12,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/joho/godotenv"
 )
+
+var sampleSecretKey = []byte("SecretYouShouldHide")
+
+// func generateJWT() (string, error) {
+// 	token := jwt.New(jwt.SigningMethodEdDSA)
+// 	claims := token.Claims.(jwt.MapClaims)
+// 	claims["exp"] = time.Now().Add(10 * time.Minute)
+// 	claims["authorized"] = true
+// 	claims["user"] = "username"
+// 	tokenString, err := token.SignedString(sampleSecretKey)
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	return tokenString, err
+// }
 
 func main() {
 	err := godotenv.Load(".env")
@@ -37,6 +55,7 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.CleanPath)
+	router.Use(httprate.LimitByIP(100, 1*time.Minute))
 
 	router.Route("/web/api", routes.HandleWebRoutes)
 	router.Route("/mob/api", routes.HandleMobileRoutes)
