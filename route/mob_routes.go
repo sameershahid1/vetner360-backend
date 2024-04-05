@@ -1,13 +1,19 @@
 package routes
 
 import (
-	"net/http"
+	"vetner360-backend/controller"
+	"vetner360-backend/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func HandleMobileRoutes(router chi.Router) {
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Fuck mobile"))
+	router.Group(func(protectedRoute chi.Router) {
+		protectedRoute.Use(middleware.MobileVerifyJWT)
+		protectedRoute.Get("/doctors", controller.GetPetOwners)
+	})
+
+	router.Group(func(publicRoute chi.Router) {
+		publicRoute.Post("/login", controller.MobileSignIn)
 	})
 }

@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +18,8 @@ func ConnectWithMongoDB(envFileName string) {
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(envFileName))
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Fatal(err.Error())
+		return
 	}
 	MongoDB = client
 	ctxDB = &ctx

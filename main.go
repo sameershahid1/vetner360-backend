@@ -16,22 +16,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var sampleSecretKey = []byte("SecretYouShouldHide")
-
-// func generateJWT() (string, error) {
-// 	token := jwt.New(jwt.SigningMethodEdDSA)
-// 	claims := token.Claims.(jwt.MapClaims)
-// 	claims["exp"] = time.Now().Add(10 * time.Minute)
-// 	claims["authorized"] = true
-// 	claims["user"] = "username"
-// 	tokenString, err := token.SignedString(sampleSecretKey)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	return tokenString, err
-// }
-
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -58,7 +42,7 @@ func main() {
 	router.Use(httprate.LimitByIP(100, 1*time.Minute))
 
 	router.Route("/web/api", routes.HandleWebRoutes)
-	router.Route("/mob/api", routes.HandleMobileRoutes)
+	router.Route("/mobile/api", routes.HandleMobileRoutes)
 
 	router.NotFound(controller.RouteDoesExists)
 	router.MethodNotAllowed(controller.MethodNotExists)
