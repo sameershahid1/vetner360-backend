@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 var MongoDB *mongo.Client
 var ctxDB *context.Context
 var errDb *error
+
+const QueryTimeout = 10
 
 func ConnectWithMongoDB(envFileName string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -24,10 +27,12 @@ func ConnectWithMongoDB(envFileName string) {
 	MongoDB = client
 	ctxDB = &ctx
 	errDb = &err
+	fmt.Println("Successfully connected with database")
 }
 
 func DisconnectWithMongodb() {
 	if *errDb = MongoDB.Disconnect(*ctxDB); *errDb != nil {
+		fmt.Println("Disconnected with database")
 		panic(errDb)
 	}
 }

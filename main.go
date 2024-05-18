@@ -32,7 +32,7 @@ func main() {
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
@@ -40,6 +40,9 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.CleanPath)
 	router.Use(httprate.LimitByIP(100, 1*time.Minute))
+	router.Use(middleware.Timeout(time.Second * 60))
+
+	router.Mount("/debug", middleware.Profiler())
 
 	router.Route("/web/api", routes.HandleWebRoutes)
 	router.Route("/mobile/api", routes.HandleMobileRoutes)

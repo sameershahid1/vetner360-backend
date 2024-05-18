@@ -10,7 +10,7 @@ import (
 func HandleWebRoutes(router chi.Router) {
 
 	router.Group(func(protectedRoute chi.Router) {
-		protectedRoute.Use(middleware.WebSignInVerifyJWT)
+		protectedRoute.Use(middleware.VerifyJWTMiddleware)
 
 		protectedRoute.Route("/pet-owner", func(moduleRoute chi.Router) {
 			moduleRoute.Get("/", controller.GetPetOwners)
@@ -65,7 +65,7 @@ func HandleWebRoutes(router chi.Router) {
 	})
 
 	router.Group(func(publicRoute chi.Router) {
-		publicRoute.Post("/login", controller.WebSignIn)
+		publicRoute.Post("/login", controller.SignIn)
 		publicRoute.Post("/registration", controller.Registration)
 	})
 }

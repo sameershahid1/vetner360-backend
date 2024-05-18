@@ -16,7 +16,7 @@ var Collection string
 func GetAll[T data_type.RecordType]() ([]T, error) {
 	var records []T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 	cur, err := collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -35,7 +35,7 @@ func GetAll[T data_type.RecordType]() ([]T, error) {
 func GetOne[T data_type.RecordType](id string) (*T, error) {
 	var record T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
 	errCur := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&record)
@@ -48,7 +48,7 @@ func GetOne[T data_type.RecordType](id string) (*T, error) {
 
 func Post(data bson.M) (interface{}, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
 	response, err := collection.InsertOne(ctx, data)
@@ -61,7 +61,7 @@ func Post(data bson.M) (interface{}, error) {
 
 func Patch[T data_type.RecordType](id string, updatedData bson.M) (*mongo.UpdateResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
 	record, errCur := collection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": updatedData})
@@ -74,7 +74,7 @@ func Patch[T data_type.RecordType](id string, updatedData bson.M) (*mongo.Update
 
 func Delete(id string) (*mongo.DeleteResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
 	result, errCur := collection.DeleteOne(ctx, bson.M{"_id": id})

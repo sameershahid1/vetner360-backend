@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,26 +25,28 @@ func jsonEncode(message string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func WebSignInVerifyJWT(next http.Handler) http.Handler {
+func VerifyJWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		cookie, err := request.Cookie("jwt")
 
-		if err != nil {
-			if err == http.ErrNoCookie {
-				jsonData, err := jsonEncode("Unauthorize Access")
-				if err != nil {
-					log.Fatal(err.Error())
-					response.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				response.WriteHeader(http.StatusUnauthorized)
-				response.Write(jsonData)
+		authorization := request.Header.Get("Authorization")
+		if authorization == "" {
+			jsonData, err := jsonEncode("Missing Authorization header")
+			if err != nil {
+				log.Fatal(err)
+				response.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			response.WriteHeader(http.StatusBadRequest)
+			response.WriteHeader(http.StatusUnauthorized)
+			response.Write(jsonData)
 			return
 		}
-		tknStr := cookie.Value
+		splitToken := strings.Split(authorization, "Bearer ")
+		if len(splitToken) != 2 {
+			response.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		tknStr := splitToken[1]
 
 		claims := &data_type.Claims{}
 		jwtKey := os.Getenv("JWT_SECRET")
@@ -65,6 +68,18 @@ func WebSignInVerifyJWT(next http.Handler) http.Handler {
 			response.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
+		// expirationString := claims.ExpiresAt
+		// expirationTime, err := time.Parse(time.RFC3339, expirationString.String())
+		// if err != nil {
+		// 	response.WriteHeader(http.StatusUnauthorized)
+		// 	return
+		// }
+
+		// if time.Now().UTC().After(expirationTime) {
+		// 	response.WriteHeader(http.StatusUnauthorized)
+		// 	return
+		// }
 
 		ctx := context.WithValue(request.Context(), "claims", claims)
 		next.ServeHTTP(response, request.WithContext(ctx))
