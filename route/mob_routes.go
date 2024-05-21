@@ -2,14 +2,14 @@ package routes
 
 import (
 	"vetner360-backend/controller"
-	"vetner360-backend/middleware"
+	custom_middleware "vetner360-backend/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func HandleMobileRoutes(router chi.Router) {
 	router.Group(func(protectedRoute chi.Router) {
-		protectedRoute.Use(middleware.VerifyJWTMiddleware)
+		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)
 		protectedRoute.Get("/doctors", controller.GetPetOwners)
 	})
 

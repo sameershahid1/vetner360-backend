@@ -8,7 +8,7 @@ import (
 )
 
 func GetDoctors(response http.ResponseWriter, request *http.Request) {
-	requestResponse := data_type.Response[model.Doctor]{Status: true, Message: "Hi, admin"}
+	requestResponse := data_type.Response[model.User]{Status: true, Message: "Hi, admin"}
 	jsonData, _ := json.Marshal(requestResponse)
 	response.WriteHeader(http.StatusOK)
 	response.Write(jsonData)

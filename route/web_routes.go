@@ -2,7 +2,7 @@ package routes
 
 import (
 	"vetner360-backend/controller"
-	"vetner360-backend/middleware"
+	custom_middleware "vetner360-backend/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -10,13 +10,13 @@ import (
 func HandleWebRoutes(router chi.Router) {
 
 	router.Group(func(protectedRoute chi.Router) {
-		protectedRoute.Use(middleware.VerifyJWTMiddleware)
+		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)
 
 		protectedRoute.Route("/pet-owner", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetPetOwners)
-			moduleRoute.Post("/", controller.PostPetOwners)
-			moduleRoute.Patch("/{id}", controller.GetPetOwners)
-			moduleRoute.Delete("/{id}", controller.GetPetOwners)
+			moduleRoute.Post("/list", controller.GetPetOwners)
+			moduleRoute.Post("/", controller.PostPetOwner)
+			moduleRoute.Patch("/{id}", controller.PatchPetOwner)
+			moduleRoute.Delete("/{id}", controller.DeletePetOwner)
 		})
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {

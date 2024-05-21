@@ -16,7 +16,21 @@ import (
 func InternalServerError(response http.ResponseWriter, err error) {
 	log.Fatal(err)
 	response.WriteHeader(http.StatusInternalServerError)
-	response.Write([]byte("Server Internal side error"))
+	jsonData, err := JsonEncode("Missing Authorization header")
+	if err != nil {
+		response.Write([]byte("Internal server error"))
+	}
+	response.Write(jsonData)
+}
+
+func JsonEncode(message string) ([]byte, error) {
+	auth := data_type.UnAuthorizeResponse{Message: message}
+	jsonData, err := json.Marshal(auth)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonData, nil
 }
 
 func JwtGenerator(response http.ResponseWriter, request *http.Request, expirationTime time.Time) (string, error) {

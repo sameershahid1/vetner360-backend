@@ -8,17 +8,18 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var Database string
 var Collection string
 
-func GetAll[T data_type.RecordType]() ([]T, error) {
+func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions) ([]T, error) {
 	var records []T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
-	cur, err := collection.Find(ctx, bson.M{})
+	cur, err := collection.Find(ctx, *filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -32,13 +33,13 @@ func GetAll[T data_type.RecordType]() ([]T, error) {
 	return records, nil
 }
 
-func GetOne[T data_type.RecordType](id string) (*T, error) {
+func GetOne[T data_type.RecordType](filter bson.M) (*T, error) {
 	var record T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
-
-	errCur := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&record)
+	// bson.M{"_id": id}
+	errCur := collection.FindOne(ctx, filter).Decode(&record)
 	if errCur != nil {
 		return nil, errCur
 	}
@@ -46,7 +47,7 @@ func GetOne[T data_type.RecordType](id string) (*T, error) {
 	return &record, nil
 }
 
-func Post(data bson.M) (interface{}, error) {
+func Post[T data_type.RecordType](data bson.M) (interface{}, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
@@ -59,12 +60,12 @@ func Post(data bson.M) (interface{}, error) {
 	return response.InsertedID, nil
 }
 
-func Patch[T data_type.RecordType](id string, updatedData bson.M) (*mongo.UpdateResult, error) {
+func Patch[T data_type.RecordType](filter bson.M, updatedData bson.M) (*mongo.UpdateResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
-	record, errCur := collection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": updatedData})
+	record, errCur := collection.UpdateOne(ctx, filter, bson.M{"$set": updatedData})
 	if errCur != nil {
 		return nil, errCur
 	}
@@ -72,12 +73,12 @@ func Patch[T data_type.RecordType](id string, updatedData bson.M) (*mongo.Update
 	return record, nil
 }
 
-func Delete(id string) (*mongo.DeleteResult, error) {
+func Delete[T data_type.RecordType](filter bson.M) (*mongo.DeleteResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
-	result, errCur := collection.DeleteOne(ctx, bson.M{"_id": id})
+	result, errCur := collection.DeleteOne(ctx, filter)
 	if errCur != nil {
 		return nil, errCur
 	}

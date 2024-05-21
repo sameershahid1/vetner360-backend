@@ -24,6 +24,7 @@ func ConnectWithMongoDB(envFileName string) {
 		log.Fatal(err.Error())
 		return
 	}
+
 	MongoDB = client
 	ctxDB = &ctx
 	errDb = &err

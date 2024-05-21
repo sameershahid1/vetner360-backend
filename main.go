@@ -7,6 +7,7 @@ import (
 	"time"
 	"vetner360-backend/controller"
 	"vetner360-backend/database"
+	custom_middleware "vetner360-backend/middleware"
 	routes "vetner360-backend/route"
 
 	"github.com/go-chi/chi/v5"
@@ -36,11 +37,12 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	router.Use(middleware.Logger)
 	router.Use(middleware.CleanPath)
 	router.Use(httprate.LimitByIP(100, 1*time.Minute))
 	router.Use(middleware.Timeout(time.Second * 60))
+	router.Use(custom_middleware.ValidateJsonFormat)
 
 	router.Mount("/debug", middleware.Profiler())
 

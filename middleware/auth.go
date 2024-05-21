@@ -1,39 +1,27 @@
-package middleware
+package custom_middleware
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"vetner360-backend/utils/helping"
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-type UnAuthorizeResponse struct {
-	Message string `json:"message"`
-}
-
-func jsonEncode(message string) ([]byte, error) {
-	auth := UnAuthorizeResponse{Message: message}
-	jsonData, err := json.Marshal(auth)
-	if err != nil {
-		return nil, err
-	}
-	return jsonData, nil
-}
 
 func VerifyJWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 
 		authorization := request.Header.Get("Authorization")
 		if authorization == "" {
-			jsonData, err := jsonEncode("Missing Authorization header")
+			jsonData, err := helping.JsonEncode("Missing Authorization header")
 			if err != nil {
 				log.Fatal(err)
 				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte("Internal Server Error"))
 				return
 			}
 			response.WriteHeader(http.StatusUnauthorized)
@@ -58,14 +46,17 @@ func VerifyJWTMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			if err == jwt.ErrSignatureInvalid {
 				response.WriteHeader(http.StatusUnauthorized)
+				response.Write([]byte("Unauthorized Request"))
 				return
 			}
 			response.WriteHeader(http.StatusBadRequest)
+			response.Write([]byte("Internal Server Error"))
 			return
 		}
 
 		if !tkn.Valid {
 			response.WriteHeader(http.StatusUnauthorized)
+			response.Write([]byte("Unauthorized Request"))
 			return
 		}
 
