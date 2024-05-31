@@ -33,19 +33,13 @@ func JsonEncode(message string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func JwtGenerator(response http.ResponseWriter, request *http.Request, expirationTime time.Time) (string, error) {
+func JwtGenerator(response http.ResponseWriter, creds *data_type.Credentials, expirationTime time.Time) (string, error) {
 	jwtKey := os.Getenv("JWT_SECRET")
-	var creds data_type.Credentials
-	err := json.NewDecoder(request.Body).Decode(&creds)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		return "", err
-	}
 
 	password, ok := static_data.Users[creds.Email]
 	if !ok || password != creds.Password {
 		response.WriteHeader(http.StatusUnauthorized)
-		return "", errors.New("Password does not match")
+		return "", errors.New("password does not match")
 	}
 
 	claims := &data_type.Claims{

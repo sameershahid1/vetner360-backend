@@ -24,6 +24,20 @@ type PetOwnerRequestType struct {
 	Password  string `json:"password" validate:"required"`
 }
 
+type DoctorRequestType struct {
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName" validate:"required"`
+	Email     string `json:"email" validate:"required"`
+	PhoneNo   string `json:"phoneNo" validate:"required"`
+	Password  string `json:"password" validate:"required"`
+
+	FatherName    *string `json:"fatherName" validate:"required"`
+	Registration  *string `json:"registration" validate:"required"`
+	ClinicAddress *string `json:"clinicAddress" validate:"required"`
+	// Longitude     *string `json:"longitude" validate:"required"`
+	// Latitude      *string `json:"latitude" validate:"required"`
+}
+
 type Credentials struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`

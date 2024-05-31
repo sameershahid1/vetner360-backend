@@ -38,7 +38,7 @@ func GetOne[T data_type.RecordType](filter bson.M) (*T, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
-	// bson.M{"_id": id}
+
 	errCur := collection.FindOne(ctx, filter).Decode(&record)
 	if errCur != nil {
 		return nil, errCur

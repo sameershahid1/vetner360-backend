@@ -66,6 +66,5 @@ func HandleWebRoutes(router chi.Router) {
 
 	router.Group(func(publicRoute chi.Router) {
 		publicRoute.Post("/login", controller.SignIn)
-		publicRoute.Post("/registration", controller.Registration)
 	})
 }
