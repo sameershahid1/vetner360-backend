@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 	"time"
-	static_data "vetner360-backend/utils/data"
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func InternalServerError(response http.ResponseWriter, err error) {
@@ -33,11 +33,12 @@ func JsonEncode(message string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func JwtGenerator(response http.ResponseWriter, creds *data_type.Credentials, expirationTime time.Time) (string, error) {
+func JwtGenerator(response http.ResponseWriter, creds *data_type.Credentials, password string, expirationTime time.Time) (string, error) {
 	jwtKey := os.Getenv("JWT_SECRET")
 
-	password, ok := static_data.Users[creds.Email]
-	if !ok || password != creds.Password {
+	err := bcrypt.CompareHashAndPassword([]byte(password), []byte(creds.Password))
+
+	if err != nil {
 		response.WriteHeader(http.StatusUnauthorized)
 		return "", errors.New("password does not match")
 	}

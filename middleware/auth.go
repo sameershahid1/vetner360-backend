@@ -28,6 +28,7 @@ func VerifyJWTMiddleware(next http.Handler) http.Handler {
 			response.Write(jsonData)
 			return
 		}
+
 		splitToken := strings.Split(authorization, "Bearer ")
 		if len(splitToken) != 2 {
 			response.WriteHeader(http.StatusUnauthorized)

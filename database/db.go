@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,6 +30,24 @@ func ConnectWithMongoDB(envFileName string) {
 	ctxDB = &ctx
 	errDb = &err
 	fmt.Println("Successfully connected with database")
+}
+
+func IndexingCollection(collectionName string, attribute string) {
+	collection := MongoDB.Database("vetner360").Collection(collectionName)
+
+	// Define the index model
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: attribute, Value: 1}},
+		Options: options.Index().SetName(attribute + "_index"),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeout*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func DisconnectWithMongodb() {

@@ -58,9 +58,8 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	}
 
 	expirationTime := time.Now().Add(time.Hour * 24 * 7)
-	tokenString, err := helping.JwtGenerator(response, &creds, expirationTime)
+	tokenString, err := helping.JwtGenerator(response, &creds, record.Password, expirationTime)
 	if err != nil {
-		// log.Fatal(err.Error())
 		response.WriteHeader(http.StatusBadRequest)
 		jsonMessage, err := helping.JsonEncode(err.Error())
 		if err != nil {
@@ -71,7 +70,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var signData = data_type.SignInType{Message: "Successfully Login", Token: &tokenString}
+	var signData = data_type.SignInType{Message: "Successfully Login", Token: &tokenString, UserId: record.Token}
 	var jsonData, err1 = json.Marshal(signData)
 
 	if err1 != nil {
@@ -108,7 +107,7 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email})
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("User already exists")
+		jsonResponse, err := helping.JsonEncode("Account already exists")
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -131,8 +130,9 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		"email":      requestBody.Email,
 		"phoneNo":    requestBody.PhoneNo,
 		"password":   string(bytes),
-		"created_at": time.Now(),
 		"token":      id.String(),
+		"roleId":     "665ceb8baf682359fe5990a8",
+		"created_at": time.Now(),
 	}
 	_, err = mongodb.Post[model.User](newRecord)
 	if err != nil {
@@ -177,7 +177,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email})
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("User already exists")
+		jsonResponse, err := helping.JsonEncode("Doctor already exists")
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -203,8 +203,9 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		"fatherName":    requestBody.FirstName,
 		"registration":  requestBody.Registration,
 		"clinicAddress": requestBody.ClinicAddress,
-		"created_at":    time.Now(),
 		"token":         id.String(),
+		"roleId":        "665cec7fc6206b06eddaacca",
+		"created_at":    time.Now(),
 	}
 	_, err = mongodb.Post[model.User](newRecord)
 	if err != nil {
@@ -212,7 +213,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully Register User"}
+	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully Register Doctor"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
