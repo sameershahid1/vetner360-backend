@@ -33,11 +33,25 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	validate := validator.New()
+	err = validate.Struct(creds)
+	if err != nil {
+		errorMessageList := strings.Split(err.Error(), "\n")
+		errorMessage := strings.Split(errorMessageList[0], "Error:")
+		response.WriteHeader(http.StatusBadRequest)
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal server side error"))
+		}
+		response.Write(jsonErrorMessage)
+		return
+	}
+
 	var filter = bson.M{"email": creds.Email}
 	record, err := mongodb.GetOne[model.User](filter)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		jsonMessage, err := helping.JsonEncode("Invalid email")
+		jsonMessage, err := helping.JsonEncode("Internal server error")
 		if err != nil {
 			response.Write([]byte("Internal server error"))
 			return
@@ -57,6 +71,15 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	var roleType int = 0
+	if record.RoleId == "665ceb8baf682359fe5990a8" {
+		roleType = 1
+	} else if record.RoleId == "665cecbdc6206b06eddaaccb" {
+		roleType = 2
+	} else if record.RoleId == "665cec7fc6206b06eddaacca" {
+		roleType = 3
+	}
+
 	expirationTime := time.Now().Add(time.Hour * 24 * 7)
 	tokenString, err := helping.JwtGenerator(response, &creds, record.Password, expirationTime)
 	if err != nil {
@@ -70,7 +93,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var signData = data_type.SignInType{Message: "Successfully Login", Token: &tokenString, UserId: record.Token}
+	var signData = data_type.SignInType{Message: "Successfully Login", Token: &tokenString, UserId: record.Token, RoleType: roleType}
 	var jsonData, err1 = json.Marshal(signData)
 
 	if err1 != nil {
@@ -100,7 +123,11 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		errorMessageList := strings.Split(err.Error(), "\n")
 		errorMessage := strings.Split(errorMessageList[0], "Error:")
 		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal server side error"))
+		}
+		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -124,6 +151,13 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		return
 	}
 
+	var roleID string = ""
+	if requestBody.UserType == 1 {
+		roleID = "665ceb8baf682359fe5990a8"
+	} else {
+		roleID = "665cecbdc6206b06eddaaccb"
+	}
+
 	var newRecord = bson.M{
 		"firstName":  requestBody.FirstName,
 		"lastName":   requestBody.LastName,
@@ -131,7 +165,7 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		"phoneNo":    requestBody.PhoneNo,
 		"password":   string(bytes),
 		"token":      id.String(),
-		"roleId":     "665ceb8baf682359fe5990a8",
+		"roleId":     roleID,
 		"created_at": time.Now(),
 	}
 	_, err = mongodb.Post[model.User](newRecord)
@@ -170,7 +204,11 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		errorMessageList := strings.Split(err.Error(), "\n")
 		errorMessage := strings.Split(errorMessageList[0], "Error:")
 		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal server side error"))
+		}
+		response.Write(jsonErrorMessage)
 		return
 	}
 

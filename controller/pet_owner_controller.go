@@ -35,7 +35,11 @@ func GetPetOwners(response http.ResponseWriter, request *http.Request) {
 		errorMessageList := strings.Split(err.Error(), "\n")
 		errorMessage := strings.Split(errorMessageList[0], "Error:")
 		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal side error"))
+		}
+		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -82,7 +86,11 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 		errorMessageList := strings.Split(err.Error(), "\n")
 		errorMessage := strings.Split(errorMessageList[0], "Error:")
 		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal side error"))
+		}
+		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -166,6 +174,11 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 		errorMessageList := strings.Split(err.Error(), "\n")
 		errorMessage := strings.Split(errorMessageList[0], "Error:")
 		http.Error(response, errorMessage[1], http.StatusBadRequest)
+		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal side error"))
+		}
+		response.Write(jsonErrorMessage)
 		return
 	}
 

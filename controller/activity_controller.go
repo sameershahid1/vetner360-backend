@@ -1,11 +1,8 @@
 package controller
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 	"vetner360-backend/database/mongodb"
@@ -20,11 +17,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetMyPetList(response http.ResponseWriter, request *http.Request) {
+func GetActivityList(response http.ResponseWriter, request *http.Request) {
 	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
+	mongodb.Collection = "activity"
 
-	var requestBody data_type.PaginationType[model.Pets]
+	var requestBody data_type.PaginationType[model.Activity]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
@@ -45,25 +42,25 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var id = chi.URLParam(request, "userId")
-	var filter = bson.M{"userId": id}
+	var id = chi.URLParam(request, "petId")
+	var filter = bson.M{"petId": id}
 	page := requestBody.Page
 	limit := requestBody.Limit
 	opts := options.FindOptions{}
 	opts.SetSkip(int64((page - 1) * limit))
 	opts.SetLimit(int64(limit))
 
-	records, err := mongodb.GetAll[model.Pets](&filter, &opts)
+	records, err := mongodb.GetAll[model.Activity](&filter, &opts)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
 	if records == nil {
-		records = []model.Pets{}
+		records = []model.Activity{}
 	}
 
-	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully Completed Request", Records: &records}
+	var requestResponse = data_type.Response[model.Activity]{Status: true, Message: "Successfully Completed Request", Records: &records}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -76,45 +73,11 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func GetPetDetail(response http.ResponseWriter, request *http.Request) {
+func PostActivity(response http.ResponseWriter, request *http.Request) {
 	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
-
-	var requestBody data_type.PaginationType[model.Pets]
-	err := json.NewDecoder(request.Body).Decode(&requestBody)
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	var id = chi.URLParam(request, "id")
-	var userId = chi.URLParam(request, "userId")
-	var filter = bson.M{"userId": userId, "token": id}
-
-	records, err := mongodb.GetOne[model.Pets](filter)
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully Completed Request", Data: records}
-	jsonData, err := json.Marshal(requestResponse)
-
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	response.WriteHeader(http.StatusOK)
-	response.Header().Add("Content-Type", "application/json")
-	response.Write(jsonData)
-}
-
-func PostPet(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
+	mongodb.Collection = "activity"
 	id := uuid.New()
-	var requestBody data_type.PetPostRequestType
+	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
@@ -135,10 +98,10 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name})
-	if isSamePets != nil {
+	isSameActivity, _ := mongodb.GetOne[model.Activity](bson.M{"name": requestBody.Name})
+	if isSameActivity != nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets already exists")
+		jsonResponse, err := helping.JsonEncode("Activity already exists")
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -147,53 +110,48 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	imageBytes, err := base64.StdEncoding.DecodeString(requestBody.Image)
-
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	filename := fmt.Sprintf("image-%d.jpg", time.Now().UnixNano())
-	filePath := fmt.Sprintf("public/%s", filename)
-	err = os.WriteFile(filePath, imageBytes, 0644)
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
 	layout := "2006-01-02T15:04:05.999"
-	parsedTime, err := time.Parse(layout, requestBody.BirthDate)
+	parseStartTime, err := time.Parse(layout, requestBody.StartTime)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("Error parsing Start date string:" + err.Error())
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+	parseEndTime, err := time.Parse(layout, requestBody.EndTime)
 
 	if err != nil {
-		fmt.Println("Error parsing date string:", err)
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("Error parsing End date string:" + err.Error())
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
 		return
 	}
 
 	var newRecord = bson.M{
 		"name":       requestBody.Name,
-		"nickName":   requestBody.NickName,
-		"gender":     requestBody.Gender,
-		"birthDate":  parsedTime,
-		"imagePath":  filename,
 		"note":       requestBody.Note,
-		"age":        requestBody.Age,
-		"weight":     requestBody.Weight,
-		"dietPlan":   requestBody.DietPlan,
-		"vaccinated": requestBody.Vaccinated,
-		"type":       "Cat",
-		"breed":      "Persian",
-		"userId":     requestBody.UserId,
+		"startTime":  parseStartTime,
+		"endTime":    parseEndTime,
+		"petId":      requestBody.PetId,
+		"status":     "Active",
 		"token":      id.String(),
 		"created_at": time.Now(),
 	}
-	_, err = mongodb.Post[model.Pets](newRecord)
+	_, err = mongodb.Post[model.Activity](newRecord)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully Completed Request"}
+	var requestResponse = data_type.Response[model.Activity]{Status: true, Message: "Successfully Completed Request"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -206,12 +164,12 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func PatchPet(response http.ResponseWriter, request *http.Request) {
+func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
+	mongodb.Collection = "activity"
 
-	var requestBody data_type.PetPatchRequestType
+	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
@@ -232,11 +190,36 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var filter = bson.M{"token": id, "userId": requestBody.UserId}
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter)
-	if isSamePets == nil {
+	var filter = bson.M{"token": id, "petId": requestBody.PetId}
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter)
+	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets does not exists")
+		jsonResponse, err := helping.JsonEncode("Activity does not exists")
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+
+	layout := "2006-01-02T15:04:05.999"
+	parseStartTime, err := time.Parse(layout, requestBody.StartTime)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("Error parsing Start date string:" + err.Error())
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+	parseEndTime, err := time.Parse(layout, requestBody.EndTime)
+
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("Error parsing End date string:" + err.Error())
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -246,24 +229,20 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var updateRecord = bson.M{
-		"name":       requestBody.Name,
-		"note":       requestBody.Note,
-		"nickName":   requestBody.NickName,
-		"gender":     requestBody.Gender,
-		"birthDate":  requestBody.BirthDate,
-		"age":        requestBody.Age,
-		"weight":     requestBody.Weight,
-		"dietPlan":   requestBody.DietPlan,
-		"vaccinated": requestBody.Vaccinated,
+		"name":      requestBody.Name,
+		"note":      requestBody.Note,
+		"startTime": parseStartTime,
+		"endTime":   parseEndTime,
+		"status":    "Active",
 	}
 
-	_, err = mongodb.Patch[model.Pets](filter, updateRecord)
+	_, err = mongodb.Patch[model.Activity](filter, updateRecord)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully updated pet"}
+	var requestResponse = data_type.Response[model.Activity]{Status: true, Message: "Successfully updated activity"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -276,17 +255,17 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func DeletePet(response http.ResponseWriter, request *http.Request) {
+func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
-	var userId = chi.URLParam(request, "userId")
-	var filter = bson.M{"token": id, "userId": userId}
+	var petId = chi.URLParam(request, "petId")
+	var filter = bson.M{"token": id, "petId": petId}
 	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
+	mongodb.Collection = "activity"
 
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter)
-	if isSamePets == nil {
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter)
+	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets does not exists")
+		jsonResponse, err := helping.JsonEncode("Activity does not exists")
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -295,13 +274,13 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := mongodb.Delete[model.Pets](filter)
+	_, err := mongodb.Delete[model.Activity](filter)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully deleted pet owner"}
+	var requestResponse = data_type.Response[model.Activity]{Status: true, Message: "Successfully deleted activity"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {

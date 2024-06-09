@@ -10,7 +10,7 @@ import (
 
 func HandleWebRoutes(router chi.Router) {
 	router.Use(middleware.CleanPath)
-	router.Use(custom_middleware.ValidateJsonFormat)
+	// router.Use(custom_middleware.ValidateJsonFormat)
 
 	router.Group(func(protectedRoute chi.Router) {
 		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)

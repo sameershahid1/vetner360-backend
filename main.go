@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/httprate"
 	"github.com/joho/godotenv"
 )
 
@@ -45,7 +44,7 @@ func main() {
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
-	router.Use(httprate.LimitByIP(100, 1*time.Minute))
+	// router.Use(httprate.LimitByIP(100, 1*time.Minute))
 	router.Use(middleware.Timeout(time.Second * 60))
 
 	controller.SocketServer.OnConnect("/", controller.SocketConnection)
@@ -68,6 +67,7 @@ func main() {
 	router.Route("/mobile/api", routes.HandleMobileRoutes)
 	router.NotFound(controller.RouteDoesExists)
 	router.MethodNotAllowed(controller.MethodNotExists)
+	router.Handle("/*", http.FileServer(http.Dir("./public")))
 
 	http.ListenAndServe(":8080", router)
 }

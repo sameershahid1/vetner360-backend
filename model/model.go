@@ -9,13 +9,13 @@ import (
 type User struct {
 	ID primitive.ObjectID `json:"id" bson:"_id"`
 	//Common information between each users
-	FirstName string             `json:"firstName" bson:"firstName"`
-	LastName  string             `json:"lastName" bson:"lastName"`
-	Email     string             `json:"email" bson:"email"`
-	PhoneNo   string             `json:"phoneNo" bson:"phoneNo"`
-	Password  string             `json:"password" bson:"password"`
-	RoleId    primitive.ObjectID `json:"roleId" bson:"roleId"`
-	Token     string             `json:"token" bson:"token"`
+	FirstName string `json:"firstName" bson:"firstName"`
+	LastName  string `json:"lastName" bson:"lastName"`
+	Email     string `json:"email" bson:"email"`
+	PhoneNo   string `json:"phoneNo" bson:"phoneNo"`
+	Password  string `json:"password" bson:"password"`
+	RoleId    string `json:"roleId" bson:"roleId"`
+	Token     string `json:"token" bson:"token"`
 
 	//Information for doctor
 	FatherName    *string `json:"fatherName" bson:"fatherName"`
@@ -33,7 +33,6 @@ type Role struct {
 	Description string             `json:"description" bson:"description"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	Token       string             `json:"token" bson:"token"`
-	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
 	// PermissionsIdList *[]primitive.ObjectID `json:"permissionIdList" bson:"permissionIdList"`
 }
 
@@ -57,7 +56,11 @@ type ContactMessage struct {
 type Pets struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id"`
 	Name       string             `json:"name" bson:"name"`
+	NickName   string             `json:"nickName" bson:"nickName"`
+	Gender     string             `json:"gender" bson:"gender"`
+	BirthDate  time.Time          `json:"birthDate" bson:"birthDate"`
 	Type       string             `json:"type" bson:"type"`
+	ImagePath  string             `json:"imagePath" bson:"imagePath"`
 	Breed      string             `json:"breed" bson:"breed"`
 	Note       string             `json:"note" bson:"note"`
 	Age        string             `json:"age" bson:"age"`
@@ -72,6 +75,7 @@ type Pets struct {
 type Activity struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
 	Name      string             `json:"name" bson:"name"`
+	Note      string             `json:"note" bson:"note"`
 	StartTime time.Time          `json:"startTime" bson:"startTime"`
 	EndTime   time.Time          `json:"endTime" bson:"endTime"`
 	Status    string             `json:"status" bson:"status"`

@@ -21,12 +21,10 @@ func ValidateJsonFormat(next http.Handler) http.Handler {
 		}
 
 		request.Body = ioutil.NopCloser(&body)
-
 		if !json.Valid(body.Bytes()) {
 			http.Error(response, "Invalid json format", http.StatusBadRequest)
 			return
 		}
 
-		next.ServeHTTP(response, request)
 	})
 }

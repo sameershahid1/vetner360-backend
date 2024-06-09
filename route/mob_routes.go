@@ -10,24 +10,40 @@ import (
 
 func HandleMobileRoutes(router chi.Router) {
 
-	router.Use(custom_middleware.ValidateJsonFormat)
+	// router.Use(custom_middleware.ValidateJsonFormat)
 	router.Use(middleware.CleanPath)
 
 	router.Group(func(protectedRoute chi.Router) {
 		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)
 		protectedRoute.Get("/doctors", controller.GetPetOwners)
+
 		protectedRoute.Route("/profile", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetProfile)
+			moduleRoute.Get("/{id}", controller.GetProfile)
 			moduleRoute.Patch("/{id}", controller.GetProfile)
 		})
 
 		protectedRoute.Route("/pet", func(moduleRoute chi.Router) {
-			moduleRoute.Post("/my-pet/{id}", controller.GetMyPetList)
-			moduleRoute.Get("/detail/{userId}/{id}", controller.GetPetDetail)
+			// moduleRoute.Get("/detail/{userId}/{id}", controller.GetPetDetail)
+			moduleRoute.Post("/my-pet/{userId}", controller.GetMyPetList)
+			moduleRoute.Post("/", controller.PostPet)
+			moduleRoute.Patch("/{id}", controller.PatchPet)
+			moduleRoute.Delete("/{userId}/{id}", controller.DeletePet)
+
+			moduleRoute.Route("/activity", func(subModuleRoute chi.Router) {
+				subModuleRoute.Post("/list/{petId}", controller.GetActivityList)
+				subModuleRoute.Post("/", controller.PostActivity)
+				subModuleRoute.Patch("/{id}", controller.PatchActivity)
+				subModuleRoute.Delete("/{petId}/{id}", controller.DeleteActivity)
+			})
+		})
+
+		protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {
+			// moduleRoute.Post("/my-pet/{id}", controller.GetPetActivity)
 			moduleRoute.Post("/", controller.PostPet)
 			moduleRoute.Patch("/{id}", controller.PatchPet)
 			moduleRoute.Delete("/{id}", controller.DeletePet)
 		})
+
 	})
 
 	router.Group(func(publicRoute chi.Router) {

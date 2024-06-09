@@ -16,7 +16,7 @@ import (
 func InternalServerError(response http.ResponseWriter, err error) {
 	log.Fatal(err)
 	response.WriteHeader(http.StatusInternalServerError)
-	jsonData, err := JsonEncode("Missing Authorization header")
+	jsonData, err := JsonEncode(err.Error())
 	if err != nil {
 		response.Write([]byte("Internal server error"))
 	}
