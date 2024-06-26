@@ -1,0 +1,6 @@
+pkg/
+bin/
+.vscode/
+.idea/
+
+.env*
