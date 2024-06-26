@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 	"vetner360-backend/database/mongodb"
 	"vetner360-backend/model"
@@ -11,7 +10,6 @@ import (
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -29,17 +27,9 @@ func GetPetOwners(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -80,17 +70,9 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -168,17 +150,9 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		http.Error(response, errorMessage[1], http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 

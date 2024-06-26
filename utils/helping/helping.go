@@ -3,18 +3,18 @@ package helping
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	data_type "vetner360-backend/utils/type"
 
+	"github.com/go-playground/validator"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func InternalServerError(response http.ResponseWriter, err error) {
-	log.Fatal(err)
 	response.WriteHeader(http.StatusInternalServerError)
 	jsonData, err := JsonEncode(err.Error())
 	if err != nil {
@@ -59,4 +59,25 @@ func JwtGenerator(response http.ResponseWriter, creds *data_type.Credentials, pa
 	}
 
 	return tokenString, nil
+}
+
+func GetValidator() *validator.Validate {
+	return validator.New()
+}
+
+func ValidatingData(data interface{}, response http.ResponseWriter, validate *validator.Validate) error {
+	err := validate.Struct(data)
+	if err != nil {
+		errorMessageList := strings.Split(err.Error(), "\n")
+		errorMessage := strings.Split(errorMessageList[0], "Error:")
+		response.WriteHeader(http.StatusBadRequest)
+		jsonErrorMessage, err := JsonEncode(errorMessage[1])
+		if err != nil {
+			response.Write([]byte("Internal server side error"))
+		}
+		response.Write(jsonErrorMessage)
+		return err
+	}
+
+	return nil
 }

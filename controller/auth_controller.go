@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 	"vetner360-backend/database/mongodb"
 	"vetner360-backend/model"
 	"vetner360-backend/utils/helping"
 	data_type "vetner360-backend/utils/type"
 
-	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -33,17 +31,9 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(creds)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(creds, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal server side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -51,17 +41,6 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	record, err := mongodb.GetOne[model.User](filter)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		jsonMessage, err := helping.JsonEncode("Internal server error")
-		if err != nil {
-			response.Write([]byte("Internal server error"))
-			return
-		}
-		response.Write(jsonMessage)
-		return
-	}
-
-	if record == nil {
-		response.WriteHeader(http.StatusBadRequest)
 		jsonMessage, err := helping.JsonEncode("Invalid email")
 		if err != nil {
 			response.Write([]byte("Internal server error"))
@@ -117,17 +96,9 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal server side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 
@@ -151,7 +122,7 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	var roleID string = ""
+	roleID := ""
 	if requestBody.UserType == 1 {
 		roleID = "665ceb8baf682359fe5990a8"
 	} else {
@@ -198,21 +169,13 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal server side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 
-	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email})
+	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email})
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Doctor already exists")
@@ -232,26 +195,32 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var newRecord = bson.M{
-		"firstName":     requestBody.FirstName,
-		"lastName":      requestBody.LastName,
-		"email":         requestBody.Email,
-		"phoneNo":       requestBody.PhoneNo,
-		"password":      string(bytes),
-		"fatherName":    requestBody.FirstName,
-		"registration":  requestBody.Registration,
-		"clinicAddress": requestBody.ClinicAddress,
-		"token":         id.String(),
-		"roleId":        "665cec7fc6206b06eddaacca",
-		"created_at":    time.Now(),
+	var location = model.Location{
+		Type:        "Point",
+		Coordinates: []float64{requestBody.Longitude, requestBody.Latitude},
 	}
-	_, err = mongodb.Post[model.User](newRecord)
+
+	var newRecord = bson.M{
+		"firstName":    requestBody.FirstName,
+		"lastName":     requestBody.LastName,
+		"email":        requestBody.Email,
+		"phoneNo":      requestBody.PhoneNo,
+		"password":     string(bytes),
+		"fatherName":   requestBody.FatherName,
+		"registration": requestBody.Registration,
+		"clinicName":   requestBody.ClinicName,
+		"location":     location,
+		"token":        id.String(),
+		"roleId":       "665cec7fc6206b06eddaacca",
+		"created_at":   time.Now(),
+	}
+	_, err = mongodb.Post[model.Doctor](newRecord)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully Register Doctor"}
+	var requestResponse = data_type.Response[model.Doctor]{Status: true, Message: "Successfully Register Doctor"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {

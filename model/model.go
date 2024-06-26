@@ -6,34 +6,57 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Location struct {
+	Type        string    `json:"type" bson:"type"`
+	Coordinates []float64 `json:"coordinates" bson:"coordinates"`
+}
+
 type User struct {
-	ID primitive.ObjectID `json:"id" bson:"_id"`
-	//Common information between each users
-	FirstName string `json:"firstName" bson:"firstName"`
-	LastName  string `json:"lastName" bson:"lastName"`
-	Email     string `json:"email" bson:"email"`
-	PhoneNo   string `json:"phoneNo" bson:"phoneNo"`
-	Password  string `json:"password" bson:"password"`
-	RoleId    string `json:"roleId" bson:"roleId"`
-	Token     string `json:"token" bson:"token"`
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	FirstName string             `json:"firstName" bson:"firstName"`
+	LastName  string             `json:"lastName" bson:"lastName"`
+	Email     string             `json:"email" bson:"email"`
+	PhoneNo   string             `json:"phoneNo" bson:"phoneNo"`
+	Password  string             `json:"password" bson:"password"`
+	RoleId    string             `json:"roleId" bson:"roleId"`
+	Token     string             `json:"token" bson:"token"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+}
 
-	//Information for doctor
-	FatherName    *string `json:"fatherName" bson:"fatherName"`
-	Registration  *string `json:"registration" bson:"registration"`
-	ClinicAddress *string `json:"clinicAddress" bson:"clinicAddress"`
-	Longitude     *string `json:"longitude" bson:"longitude"`
-	Latitude      *string `json:"latitude" bson:"latitude"`
+type Doctor struct {
+	ID           primitive.ObjectID `json:"id" bson:"_id"`
+	FirstName    string             `json:"firstName" bson:"firstName"`
+	LastName     string             `json:"lastName" bson:"lastName"`
+	Email        string             `json:"email" bson:"email"`
+	PhoneNo      string             `json:"phoneNo" bson:"phoneNo"`
+	Password     string             `json:"password" bson:"password"`
+	RoleId       string             `json:"roleId" bson:"roleId"`
+	Token        string             `json:"token" bson:"token"`
+	CreatedAt    time.Time          `json:"created_at" bson:"created_at"`
+	FatherName   string             `json:"fatherName" bson:"fatherName"`
+	Registration string             `json:"registration" bson:"registration"`
+	ClinicName   string             `json:"clinicName" bson:"clinicAddress"`
+	Location     Location           `json:"location" bson:"location"`
+	Experience   *string            `json:"experience" bson:"experience"`
+	Bio          *string            `json:"bio" bson:"bio"`
+}
 
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+type DoctorReview struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	UserId    string             `json:"userId" bson:"userId"`
+	DocId     string             `json:"docId" bson:"docId"`
+	Message   string             `json:"message" bson:"message"`
+	Rating    int16              `json:"rating" bson:"rating"`
+	Token     string             `json:"token" bson:"token"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Role struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id"`
 	Name        string             `json:"name" bson:"name"`
 	Description string             `json:"description" bson:"description"`
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	Token       string             `json:"token" bson:"token"`
-	// PermissionsIdList *[]primitive.ObjectID `json:"permissionIdList" bson:"permissionIdList"`
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Permission struct {

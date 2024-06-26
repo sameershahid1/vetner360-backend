@@ -37,12 +37,16 @@ func HandleMobileRoutes(router chi.Router) {
 			})
 		})
 
-		protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {
-			// moduleRoute.Post("/my-pet/{id}", controller.GetPetActivity)
-			moduleRoute.Post("/", controller.PostPet)
-			moduleRoute.Patch("/{id}", controller.PatchPet)
-			moduleRoute.Delete("/{id}", controller.DeletePet)
+		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
+			moduleRoute.Get("/nearest", controller.GetNearestDoctors)
 		})
+
+		// protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {
+		// 	moduleRoute.Post("/my-pet/{id}", controller.GetPetActivity)
+		// 	moduleRoute.Post("/", controller.PostPet)
+		// 	moduleRoute.Patch("/{id}", controller.PatchPet)
+		// 	moduleRoute.Delete("/{id}", controller.DeletePet)
+		// })
 
 	})
 

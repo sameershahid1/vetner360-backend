@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -32,18 +33,14 @@ func SocketConnection(s socketio.Conn) error {
 	return nil
 }
 
-func EventMessage(s socketio.Conn, msg string) string {
-
+func EventMessage(s socketio.Conn, msg string) {
+	fmt.Println(s.Rooms())
 	SocketServer.BroadcastToRoom("/", "ab1", "reply", msg)
-	return "recv " + msg
 }
 
 func JoinRoom(s socketio.Conn, msg string) {
-	//Check if Participants exists, if exists than it will create room, other wise it will ignore it
-	// if 1 {
-	// }
 	s.Join("ab1")
-	s.Emit("reply", "Have Joined "+msg)
+	SocketServer.BroadcastToRoom("/", "ab1", "reply", msg)
 }
 
 func LeaveRoom(s socketio.Conn) string {

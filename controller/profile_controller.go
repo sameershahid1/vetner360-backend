@@ -3,14 +3,12 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"vetner360-backend/database/mongodb"
 	"vetner360-backend/model"
 	"vetner360-backend/utils/helping"
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -60,17 +58,9 @@ func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		jsonErrorMessage, err := helping.JsonEncode(errorMessage[1])
-		if err != nil {
-			response.Write([]byte("Internal side error"))
-		}
-		response.Write(jsonErrorMessage)
 		return
 	}
 

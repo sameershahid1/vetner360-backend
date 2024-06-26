@@ -9,7 +9,6 @@ import (
 	"vetner360-backend/controller"
 	"vetner360-backend/database"
 	routes "vetner360-backend/route"
-	static_data "vetner360-backend/utils/data"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,12 +23,19 @@ func main() {
 	}
 
 	url := os.Getenv("MONGODB_URI")
-	database.ConnectWithMongoDB(url)
-	for i := 0; i < len(static_data.IndexCollection); i++ {
-		collectionName := static_data.IndexCollection[i]
-		collectionAttribute := static_data.IndexCollectionAttribute[collectionName]
-		database.IndexingCollection(collectionName, collectionAttribute)
+	port := os.Getenv("PORT")
+	if port != "" {
+		port = "8080"
 	}
+
+	database.ConnectWithMongoDB(url)
+
+	// for collectionName, columnList := range static_data.IndexCollection {
+	// 	for column := range columnList {
+	// 		collectionAttribute := static_data.IndexCollectionAttribute[collectionName]
+	// 		database.IndexingCollection(collectionName, columnList[column], collectionAttribute[columnList[column]])
+	// 	}
+	// }
 	defer database.DisconnectWithMongodb()
 
 	router := chi.NewRouter()
@@ -44,11 +50,10 @@ func main() {
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
-	// router.Use(httprate.LimitByIP(100, 1*time.Minute))
 	router.Use(middleware.Timeout(time.Second * 60))
 
 	controller.SocketServer.OnConnect("/", controller.SocketConnection)
-	controller.SocketServer.OnEvent("/", "msg", controller.EventMessage)
+	controller.SocketServer.OnEvent("/", "message", controller.EventMessage)
 	controller.SocketServer.OnEvent("/", "join-room", controller.JoinRoom)
 	controller.SocketServer.OnEvent("/", "leave-room", controller.LeaveRoom)
 	controller.SocketServer.OnError("/", controller.SocketError)
@@ -69,5 +74,5 @@ func main() {
 	router.MethodNotAllowed(controller.MethodNotExists)
 	router.Handle("/*", http.FileServer(http.Dir("./public")))
 
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
 }

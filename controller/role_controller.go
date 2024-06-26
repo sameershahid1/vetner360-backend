@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 	"vetner360-backend/database/mongodb"
 	"vetner360-backend/model"
@@ -11,7 +10,6 @@ import (
 	data_type "vetner360-backend/utils/type"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -28,13 +26,9 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
 		return
 	}
 
@@ -75,13 +69,9 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		response.WriteHeader(http.StatusBadRequest)
-		helping.JsonEncode(errorMessage[1])
 		return
 	}
 
@@ -147,12 +137,9 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(requestBody)
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
 	if err != nil {
-		errorMessageList := strings.Split(err.Error(), "\n")
-		errorMessage := strings.Split(errorMessageList[0], "Error:")
-		http.Error(response, errorMessage[1], http.StatusBadRequest)
 		return
 	}
 
