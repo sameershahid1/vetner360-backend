@@ -17,8 +17,6 @@ import (
 
 func SignIn(response http.ResponseWriter, request *http.Request) {
 	var creds data_type.Credentials
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 	err := json.NewDecoder(request.Body).Decode(&creds)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -38,7 +36,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"email": creds.Email}
-	record, err := mongodb.GetOne[model.User](filter)
+	record, err := mongodb.GetOne[model.User](filter, "users")
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		jsonMessage, err := helping.JsonEncode("Invalid email")
@@ -86,8 +84,6 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 }
 
 func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 	id := uuid.New()
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -102,7 +98,7 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email})
+	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Account already exists")
@@ -139,7 +135,7 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 		"roleId":     roleID,
 		"created_at": time.Now(),
 	}
-	_, err = mongodb.Post[model.User](newRecord)
+	_, err = mongodb.Post[model.User](newRecord, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -159,8 +155,6 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 }
 
 func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 	id := uuid.New()
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -175,7 +169,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email})
+	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email}, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Doctor already exists")
@@ -214,7 +208,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		"roleId":       "665cec7fc6206b06eddaacca",
 		"created_at":   time.Now(),
 	}
-	_, err = mongodb.Post[model.Doctor](newRecord)
+	_, err = mongodb.Post[model.Doctor](newRecord, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return

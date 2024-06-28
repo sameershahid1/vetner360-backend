@@ -17,9 +17,6 @@ import (
 )
 
 func GetPetOwners(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
-
 	var requestBody data_type.PaginationType[model.User]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -40,7 +37,7 @@ func GetPetOwners(response http.ResponseWriter, request *http.Request) {
 	opts.SetSkip(int64((page - 1) * limit))
 	opts.SetLimit(int64(limit))
 
-	records, err := mongodb.GetAll[model.User](&filter, &opts)
+	records, err := mongodb.GetAll[model.User](&filter, &opts, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -60,8 +57,6 @@ func GetPetOwners(response http.ResponseWriter, request *http.Request) {
 }
 
 func PostPetOwner(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 	id := uuid.New()
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -76,7 +71,7 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email})
+	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User already exists")
@@ -106,7 +101,7 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 		"roleId":     "665ce8afd343136949deade1",
 		"token":      id.String(),
 	}
-	_, err = mongodb.Post[model.User](newRecord)
+	_, err = mongodb.Post[model.User](newRecord, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -128,10 +123,8 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 
-	isSameUser, _ := mongodb.GetOne[model.User](filter)
+	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
@@ -176,7 +169,7 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 		"password":  requestBody.Password,
 	}
 
-	_, err = mongodb.Patch[model.User](filter, newRecord)
+	_, err = mongodb.Patch[model.User](filter, newRecord, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -198,10 +191,8 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 func DeletePetOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 
-	isSameUser, _ := mongodb.GetOne[model.User](filter)
+	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
@@ -213,7 +204,7 @@ func DeletePetOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := mongodb.Delete[model.User](filter)
+	_, err := mongodb.Delete[model.User](filter, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return

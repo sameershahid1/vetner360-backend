@@ -106,9 +106,14 @@ type UnAuthorizeResponse struct {
 	Message string `json:"message"`
 }
 
-type EventMessageType struct {
-	RoomId     string `json:"roomId" validate:"required"`
-	SenderId   string `json:"senderId" validate:"required"`
-	ReceiverId string `json:"receiverId" validate:"required"`
-	Message    string `json:"message" validate:"required"`
+type ParticipantType struct {
+	UserId string `json:"userId" validate:"required"`
+	RoomId string `json:"roomId" validate:"required"`
+}
+
+type MessageBody struct {
+	SenderId string `json:"senderId"`
+	RoomId   string `json:"roomId"`
+	Content  string `json:"content"`
+	Type     string `json:"type"`
 }

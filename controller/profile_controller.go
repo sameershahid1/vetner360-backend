@@ -14,9 +14,6 @@ import (
 )
 
 func GetProfile(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
-
 	var requestBody data_type.PaginationType[model.User]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -27,7 +24,7 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 	var userId = chi.URLParam(request, "id")
 	var filter = bson.M{"token": userId}
 
-	records, err := mongodb.GetOne[model.User](filter)
+	records, err := mongodb.GetOne[model.User](filter, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -48,8 +45,6 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 
 func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -65,7 +60,7 @@ func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"token": id}
-	isSameUser, _ := mongodb.GetOne[model.User](filter)
+	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
@@ -93,7 +88,7 @@ func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 		"password":  string(bytes),
 	}
 
-	_, err = mongodb.Patch[model.User](filter, updateRecord)
+	_, err = mongodb.Patch[model.User](filter, updateRecord, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return

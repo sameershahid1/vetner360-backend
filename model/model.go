@@ -38,7 +38,7 @@ type Doctor struct {
 	ClinicName   string             `json:"clinicName" bson:"clinicAddress"`
 	Location     Location           `json:"location" bson:"location"`
 	Experience   *string            `json:"experience" bson:"experience"`
-	Bio          *string            `json:"bio" bson:"bio"`
+	Bio          *string            `json:" " bson:"bio"`
 }
 
 type DoctorReview struct {

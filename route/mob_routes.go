@@ -9,7 +9,6 @@ import (
 )
 
 func HandleMobileRoutes(router chi.Router) {
-
 	// router.Use(custom_middleware.ValidateJsonFormat)
 	router.Use(middleware.CleanPath)
 
@@ -39,6 +38,12 @@ func HandleMobileRoutes(router chi.Router) {
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
 			moduleRoute.Get("/nearest", controller.GetNearestDoctors)
+		})
+
+		protectedRoute.Route("/chat", func(moduleRoute chi.Router) {
+			moduleRoute.Post("/participant/{roomId}", controller.GetChatParticipant)
+			moduleRoute.Post("/chat-participant/add", controller.AddParticipant)
+			moduleRoute.Get("/messages/{roomId}", controller.GetChatMessages)
 		})
 
 		// protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {

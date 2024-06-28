@@ -11,10 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Database string
-var Collection string
+var Database string = "vetner360"
 
-func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions) ([]T, error) {
+func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions, Collection string) ([]T, error) {
 	var records []T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
@@ -33,7 +32,7 @@ func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions) (
 	return records, nil
 }
 
-func GetOne[T data_type.RecordType](filter bson.M) (*T, error) {
+func GetOne[T data_type.RecordType](filter bson.M, Collection string) (*T, error) {
 	var record T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
@@ -47,7 +46,7 @@ func GetOne[T data_type.RecordType](filter bson.M) (*T, error) {
 	return &record, nil
 }
 
-func Post[T data_type.RecordType](data bson.M) (interface{}, error) {
+func Post[T data_type.RecordType](data bson.M, Collection string) (interface{}, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
@@ -60,7 +59,7 @@ func Post[T data_type.RecordType](data bson.M) (interface{}, error) {
 	return response.InsertedID, nil
 }
 
-func Patch[T data_type.RecordType](filter bson.M, updatedData bson.M) (*mongo.UpdateResult, error) {
+func Patch[T data_type.RecordType](filter bson.M, updatedData bson.M, Collection string) (*mongo.UpdateResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
@@ -73,7 +72,7 @@ func Patch[T data_type.RecordType](filter bson.M, updatedData bson.M) (*mongo.Up
 	return record, nil
 }
 
-func Delete[T data_type.RecordType](filter bson.M) (*mongo.DeleteResult, error) {
+func Delete[T data_type.RecordType](filter bson.M, Collection string) (*mongo.DeleteResult, error) {
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()

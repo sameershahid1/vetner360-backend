@@ -23,8 +23,6 @@ func GetDoctors(response http.ResponseWriter, request *http.Request) {
 
 func GetNearestDoctors(response http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "users"
 
 	if query["latitude"] == nil {
 		helping.InternalServerError(response, errors.New("missing latitude query"))
@@ -61,7 +59,7 @@ func GetNearestDoctors(response http.ResponseWriter, request *http.Request) {
 	}
 	opts := options.FindOptions{}
 
-	records, err := mongodb.GetAll[model.Doctor](&filter, &opts)
+	records, err := mongodb.GetAll[model.Doctor](&filter, &opts, "users")
 
 	if err != nil {
 		print(err.Error())

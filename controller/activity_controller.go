@@ -18,9 +18,6 @@ import (
 )
 
 func GetActivityList(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "activity"
-
 	var requestBody data_type.PaginationType[model.Activity]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -50,7 +47,7 @@ func GetActivityList(response http.ResponseWriter, request *http.Request) {
 	opts.SetSkip(int64((page - 1) * limit))
 	opts.SetLimit(int64(limit))
 
-	records, err := mongodb.GetAll[model.Activity](&filter, &opts)
+	records, err := mongodb.GetAll[model.Activity](&filter, &opts, "activity")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -74,8 +71,6 @@ func GetActivityList(response http.ResponseWriter, request *http.Request) {
 }
 
 func PostActivity(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "activity"
 	id := uuid.New()
 	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -98,7 +93,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSameActivity, _ := mongodb.GetOne[model.Activity](bson.M{"name": requestBody.Name})
+	isSameActivity, _ := mongodb.GetOne[model.Activity](bson.M{"name": requestBody.Name}, "activity")
 	if isSameActivity != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity already exists")
@@ -145,7 +140,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		"token":      id.String(),
 		"created_at": time.Now(),
 	}
-	_, err = mongodb.Post[model.Activity](newRecord)
+	_, err = mongodb.Post[model.Activity](newRecord, "activity")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -166,8 +161,6 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 
 func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "activity"
 
 	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -191,7 +184,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"token": id, "petId": requestBody.PetId}
-	isSameActivity, _ := mongodb.GetOne[model.Activity](filter)
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, "activity")
 	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")
@@ -236,7 +229,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 		"status":    "Active",
 	}
 
-	_, err = mongodb.Patch[model.Activity](filter, updateRecord)
+	_, err = mongodb.Patch[model.Activity](filter, updateRecord, "activity")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -259,10 +252,8 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var petId = chi.URLParam(request, "petId")
 	var filter = bson.M{"token": id, "petId": petId}
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "activity"
 
-	isSameActivity, _ := mongodb.GetOne[model.Activity](filter)
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, "activity")
 	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")
@@ -274,7 +265,7 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := mongodb.Delete[model.Activity](filter)
+	_, err := mongodb.Delete[model.Activity](filter, "activity")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return

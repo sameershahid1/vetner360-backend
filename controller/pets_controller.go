@@ -19,9 +19,6 @@ import (
 )
 
 func GetMyPetList(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
-
 	var requestBody data_type.PaginationType[model.Pets]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -43,7 +40,7 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 	opts.SetSkip(int64((page - 1) * limit))
 	opts.SetLimit(int64(limit))
 
-	records, err := mongodb.GetAll[model.Pets](&filter, &opts)
+	records, err := mongodb.GetAll[model.Pets](&filter, &opts, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -67,8 +64,6 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 }
 
 func GetPetDetail(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
 
 	var requestBody data_type.PaginationType[model.Pets]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -81,7 +76,7 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 	var userId = chi.URLParam(request, "userId")
 	var filter = bson.M{"userId": userId, "token": id}
 
-	records, err := mongodb.GetOne[model.Pets](filter)
+	records, err := mongodb.GetOne[model.Pets](filter, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -101,8 +96,6 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 }
 
 func PostPet(response http.ResponseWriter, request *http.Request) {
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
 	id := uuid.New()
 	var requestBody data_type.PetPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -117,7 +110,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name})
+	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name}, "pets")
 	if isSamePets != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets already exists")
@@ -169,7 +162,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 		"token":      id.String(),
 		"created_at": time.Now(),
 	}
-	_, err = mongodb.Post[model.Pets](newRecord)
+	_, err = mongodb.Post[model.Pets](newRecord, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -190,8 +183,6 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 
 func PatchPet(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
 
 	var requestBody data_type.PetPatchRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
@@ -207,7 +198,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"token": id, "userId": requestBody.UserId}
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter)
+	isSamePets, _ := mongodb.GetOne[model.Pets](filter, "pets")
 	if isSamePets == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")
@@ -231,7 +222,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 		"vaccinated": requestBody.Vaccinated,
 	}
 
-	_, err = mongodb.Patch[model.Pets](filter, updateRecord)
+	_, err = mongodb.Patch[model.Pets](filter, updateRecord, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -254,10 +245,8 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var userId = chi.URLParam(request, "userId")
 	var filter = bson.M{"token": id, "userId": userId}
-	mongodb.Database = "vetner360"
-	mongodb.Collection = "pets"
 
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter)
+	isSamePets, _ := mongodb.GetOne[model.Pets](filter, "pets")
 	if isSamePets == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")
@@ -269,7 +258,7 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := mongodb.Delete[model.Pets](filter)
+	_, err := mongodb.Delete[model.Pets](filter, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
