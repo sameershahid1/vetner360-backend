@@ -93,7 +93,8 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSameActivity, _ := mongodb.GetOne[model.Activity](bson.M{"name": requestBody.Name}, "activity")
+	opts := options.FindOneOptions{}
+	isSameActivity, _ := mongodb.GetOne[model.Activity](bson.M{"name": requestBody.Name}, &opts, "activity")
 	if isSameActivity != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity already exists")
@@ -184,7 +185,8 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"token": id, "petId": requestBody.PetId}
-	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, "activity")
+	opts := options.FindOneOptions{}
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, &opts, "activity")
 	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")
@@ -252,8 +254,8 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var petId = chi.URLParam(request, "petId")
 	var filter = bson.M{"token": id, "petId": petId}
-
-	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, "activity")
+	opts := options.FindOneOptions{}
+	isSameActivity, _ := mongodb.GetOne[model.Activity](filter, &opts, "activity")
 	if isSameActivity == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")

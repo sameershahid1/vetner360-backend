@@ -35,20 +35,20 @@ type Doctor struct {
 	CreatedAt    time.Time          `json:"created_at" bson:"created_at"`
 	FatherName   string             `json:"fatherName" bson:"fatherName"`
 	Registration string             `json:"registration" bson:"registration"`
-	ClinicName   string             `json:"clinicName" bson:"clinicAddress"`
+	ClinicName   string             `json:"clinicName" bson:"clinicName"`
 	Location     Location           `json:"location" bson:"location"`
-	Experience   *string            `json:"experience" bson:"experience"`
-	Bio          *string            `json:" " bson:"bio"`
+	Experience   string             `json:"experience" bson:"experience"`
+	Bio          string             `json:"bio" bson:"bio"`
 }
 
-type DoctorReview struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id"`
-	UserId    string             `json:"userId" bson:"userId"`
-	DocId     string             `json:"docId" bson:"docId"`
-	Message   string             `json:"message" bson:"message"`
-	Rating    int16              `json:"rating" bson:"rating"`
-	Token     string             `json:"token" bson:"token"`
-	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+type Review struct {
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	SenderId   string             `json:"senderId" bson:"senderId"`
+	ReceiverId string             `json:"receiverId" bson:"receiverId"`
+	Message    string             `json:"message" bson:"message"`
+	Rating     int16              `json:"rating" bson:"rating"`
+	Token      string             `json:"token" bson:"token"`
+	CreatedAt  time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Role struct {
@@ -108,11 +108,12 @@ type Activity struct {
 }
 
 type Participant struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id"`
-	UserId    string             `json:"userId" bson:"userId"`
-	RoomId    string             `json:"roomId" bson:"roomId"`
-	Token     string             `json:"token" bson:"token"`
-	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	UserId     string             `json:"userId" bson:"userId"`
+	ReceiverId string             `json:"receiverId" bson:"receiverId"`
+	RoomId     string             `json:"roomId" bson:"roomId"`
+	Token      string             `json:"token" bson:"token"`
+	CreatedAt  time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Message struct {

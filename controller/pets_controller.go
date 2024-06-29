@@ -75,8 +75,8 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var userId = chi.URLParam(request, "userId")
 	var filter = bson.M{"userId": userId, "token": id}
-
-	records, err := mongodb.GetOne[model.Pets](filter, "pets")
+	opts := options.FindOneOptions{}
+	records, err := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -109,8 +109,8 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-
-	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name}, "pets")
+	opts := options.FindOneOptions{}
+	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name}, &opts, "pets")
 	if isSamePets != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets already exists")
@@ -196,9 +196,9 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-
+	opts := options.FindOneOptions{}
 	var filter = bson.M{"token": id, "userId": requestBody.UserId}
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter, "pets")
+	isSamePets, _ := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if isSamePets == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")
@@ -245,8 +245,8 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var userId = chi.URLParam(request, "userId")
 	var filter = bson.M{"token": id, "userId": userId}
-
-	isSamePets, _ := mongodb.GetOne[model.Pets](filter, "pets")
+	opts := options.FindOneOptions{}
+	isSamePets, _ := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if isSamePets == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")

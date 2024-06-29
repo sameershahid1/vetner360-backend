@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,8 +24,8 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 
 	var userId = chi.URLParam(request, "id")
 	var filter = bson.M{"token": userId}
-
-	records, err := mongodb.GetOne[model.User](filter, "users")
+	opts := options.FindOneOptions{}
+	records, err := mongodb.GetOne[model.User](filter, &opts, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
@@ -43,7 +44,7 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func UpdateProfile(response http.ResponseWriter, request *http.Request) {
+func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 
 	var requestBody data_type.PetOwnerRequestType
@@ -60,7 +61,8 @@ func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"token": id}
-	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](filter, &opts, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
@@ -95,6 +97,80 @@ func UpdateProfile(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully updated pet"}
+	jsonData, err := json.Marshal(requestResponse)
+
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Add("Content-Type", "application/json")
+	response.Write(jsonData)
+}
+
+func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
+	var id = chi.URLParam(request, "id")
+
+	var requestBody data_type.DoctorRequestType
+	err := json.NewDecoder(request.Body).Decode(&requestBody)
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
+	if err != nil {
+		return
+	}
+
+	var filter = bson.M{"token": id}
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.Doctor](filter, &opts, "users")
+	if isSameUser == nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("User does not exists")
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+
+	cost := bcrypt.DefaultCost
+	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
+
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var location = model.Location{
+		Type:        "Point",
+		Coordinates: []float64{requestBody.Longitude, requestBody.Latitude},
+	}
+
+	var updateRecord = bson.M{
+		"firstName":    requestBody.FirstName,
+		"lastName":     requestBody.LastName,
+		"email":        requestBody.Email,
+		"phoneNo":      requestBody.PhoneNo,
+		"password":     string(bytes),
+		"fatherName":   requestBody.FatherName,
+		"registration": requestBody.Registration,
+		"clinicName":   requestBody.ClinicName,
+		"location":     location,
+	}
+
+	_, err = mongodb.Patch[model.Doctor](filter, updateRecord, "users")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.Doctor]{Status: true, Message: "Successfully updated pet"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {

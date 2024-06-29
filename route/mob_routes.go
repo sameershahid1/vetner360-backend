@@ -14,15 +14,14 @@ func HandleMobileRoutes(router chi.Router) {
 
 	router.Group(func(protectedRoute chi.Router) {
 		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)
-		protectedRoute.Get("/doctors", controller.GetPetOwners)
 
 		protectedRoute.Route("/profile", func(moduleRoute chi.Router) {
 			moduleRoute.Get("/{id}", controller.GetProfile)
-			moduleRoute.Patch("/{id}", controller.GetProfile)
+			moduleRoute.Patch("/user/{id}", controller.UpdateUserProfile)
+			moduleRoute.Patch("/doctor/{id}", controller.UpdateDoctorProfile)
 		})
 
 		protectedRoute.Route("/pet", func(moduleRoute chi.Router) {
-			// moduleRoute.Get("/detail/{userId}/{id}", controller.GetPetDetail)
 			moduleRoute.Post("/my-pet/{userId}", controller.GetMyPetList)
 			moduleRoute.Post("/", controller.PostPet)
 			moduleRoute.Patch("/{id}", controller.PatchPet)
@@ -41,9 +40,10 @@ func HandleMobileRoutes(router chi.Router) {
 		})
 
 		protectedRoute.Route("/chat", func(moduleRoute chi.Router) {
-			moduleRoute.Post("/participant/{roomId}", controller.GetChatParticipant)
+			moduleRoute.Post("/participant/{userId}", controller.GetChatParticipant)
 			moduleRoute.Post("/chat-participant/add", controller.AddParticipant)
 			moduleRoute.Get("/messages/{roomId}", controller.GetChatMessages)
+			moduleRoute.Get("/messages/latest/{roomId}", controller.GetLatestMessage)
 		})
 
 		// protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {

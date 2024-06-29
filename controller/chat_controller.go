@@ -102,7 +102,6 @@ func SocketDisconnect(s socketio.Conn, reason string) {
 }
 
 func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
-
 	var requestBody data_type.PaginationType[model.Participant]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -116,8 +115,10 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var roomId = chi.URLParam(request, "roomId")
-	var filter = bson.M{"roomId": roomId}
+	var userId = chi.URLParam(request, "userId")
+	var filter = bson.M{
+		"userId": userId,
+	}
 	page := requestBody.Page
 	limit := requestBody.Limit
 	opts := options.FindOptions{}
@@ -129,12 +130,37 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 		helping.InternalServerError(response, err)
 		return
 	}
-
 	if records == nil {
 		records = []model.Participant{}
 	}
 
-	var requestResponse = data_type.Response[model.Participant]{Status: true, Message: "Successfully loaded participant Request", Records: &records}
+	receiverIdList := make([]string, len(records))
+	for i := range records {
+		receiverIdList[i] = records[i].ReceiverId
+	}
+
+	var userFilter = bson.M{
+		"token": bson.M{"$in": receiverIdList},
+	}
+
+	if requestBody.Search != nil {
+		userFilter = bson.M{
+			"token": bson.M{"$in": receiverIdList},
+			"$text": bson.M{"$search": *requestBody.Search},
+		}
+	}
+
+	userRecords, err := mongodb.GetAll[model.Doctor](&userFilter, &opts, "users")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	if userRecords == nil {
+		userRecords = []model.Doctor{}
+	}
+
+	var requestResponse = data_type.Response[model.Doctor]{Status: true, Message: "Successfully loaded participant", Records: &userRecords}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -176,6 +202,31 @@ func GetChatMessages(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
+func GetLatestMessage(response http.ResponseWriter, request *http.Request) {
+	var roomId = chi.URLParam(request, "roomId")
+	var filter = bson.M{"roomId": roomId}
+	opts := options.FindOneOptions{}
+	opts.Sort = bson.D{{"created_at", -1}}
+
+	record, err := mongodb.GetOne[model.Message](filter, &opts, "messages")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.Message]{Status: true, Message: "Successfully loaded messages", Data: record}
+	jsonData, err := json.Marshal(requestResponse)
+
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Add("Content-Type", "application/json")
+	response.Write(jsonData)
+}
+
 func AddParticipant(response http.ResponseWriter, request *http.Request) {
 	id := uuid.New()
 	var requestBody data_type.ParticipantType
@@ -198,8 +249,8 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 		response.Write(jsonErrorMessage)
 		return
 	}
-
-	isSame, _ := mongodb.GetOne[model.Participant](bson.M{"userId": requestBody.UserId, "roomId": requestBody.RoomId}, "participants")
+	opts := options.FindOneOptions{}
+	isSame, _ := mongodb.GetOne[model.Participant](bson.M{"userId": requestBody.UserId, "roomId": requestBody.RoomId}, &opts, "participants")
 	if isSame != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Participants already exists")
@@ -213,6 +264,7 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 
 	var newRecord = bson.M{
 		"userId":     requestBody.UserId,
+		"receiverId": requestBody.ReceiverId,
 		"roomId":     requestBody.RoomId,
 		"token":      id.String(),
 		"created_at": time.Now(),

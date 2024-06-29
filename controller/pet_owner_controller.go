@@ -71,7 +71,8 @@ func PostPetOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User already exists")
@@ -124,7 +125,8 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
 
-	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](filter, &opts, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
@@ -191,8 +193,8 @@ func PatchPetOwner(response http.ResponseWriter, request *http.Request) {
 func DeletePetOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
-
-	isSameUser, _ := mongodb.GetOne[model.User](filter, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](filter, &opts, "users")
 	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")

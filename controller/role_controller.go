@@ -70,8 +70,8 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-
-	isSame, _ := mongodb.GetOne[model.Role](bson.M{"name": requestBody.Name}, "roles")
+	opts := options.FindOneOptions{}
+	isSame, _ := mongodb.GetOne[model.Role](bson.M{"name": requestBody.Name}, &opts, "roles")
 	if isSame != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Role already exists")
@@ -111,8 +111,8 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
-
-	isSame, _ := mongodb.GetOne[model.Role](filter, "roles")
+	opts := options.FindOneOptions{}
+	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
 	if isSame == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Role does not exists")
@@ -164,8 +164,8 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 func DeleteRoleOwner(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
-
-	isSame, _ := mongodb.GetOne[model.Role](filter, "roles")
+	opts := options.FindOneOptions{}
+	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
 	if isSame == nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Role does not exists")

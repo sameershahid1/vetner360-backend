@@ -11,9 +11,10 @@ type RecordType interface {
 }
 
 type PaginationType[T RecordType] struct {
-	Page   uint16 `json:"page" validate:"required,number"`
-	Limit  uint16 `json:"limit" validate:"required,number"`
-	Record *[]T   `json:"record"`
+	Page   uint16  `json:"page" validate:"required,number"`
+	Limit  uint16  `json:"limit" validate:"required,number"`
+	Record *[]T    `json:"record"`
+	Search *string `json:"search"`
 }
 
 type PetOwnerRequestType struct {
@@ -23,6 +24,21 @@ type PetOwnerRequestType struct {
 	PhoneNo   string `json:"phoneNo" validate:"required"`
 	Password  string `json:"password" validate:"required"`
 	UserType  int    `json:"userType" validate:"required"`
+}
+
+type DoctorRequestType struct {
+	FirstName    string  `json:"firstName" validate:"required,min=3,max=25"`
+	LastName     string  `json:"lastName" validate:"required,min=3,max=25"`
+	Email        string  `json:"email" validate:"required,email"`
+	PhoneNo      string  `json:"phoneNo" validate:"required"`
+	Password     string  `json:"password" validate:"required,min=6,max=25"`
+	FatherName   string  `json:"fatherName" validate:"required,min=3,max=25"`
+	Registration string  `json:"registration" validate:"required"`
+	ClinicName   string  `json:"clinicName" validate:"required,min=3,max=25"`
+	Longitude    float64 `json:"longitude" validate:"required"`
+	Latitude     float64 `json:"latitude" validate:"required"`
+	Experience   string  `json:"experience" validate:"required"`
+	Bio          string  `json:"bio" validate:"required"`
 }
 
 type PetPostRequestType struct {
@@ -65,19 +81,6 @@ type RoleRequestType struct {
 	Description string `json:"description" validate:"required"`
 }
 
-type DoctorRequestType struct {
-	FirstName    string  `json:"firstName" validate:"required,min=3,max=25"`
-	LastName     string  `json:"lastName" validate:"required,min=3,max=25"`
-	Email        string  `json:"email" validate:"required,email"`
-	PhoneNo      string  `json:"phoneNo" validate:"required"`
-	Password     string  `json:"password" validate:"required,min=6,max=25"`
-	FatherName   string  `json:"fatherName" validate:"required,min=3,max=25"`
-	Registration string  `json:"registration" validate:"required"`
-	ClinicName   string  `json:"clinicName" validate:"required,min=3,max=25"`
-	Longitude    float64 `json:"longitude" validate:"required"`
-	Latitude     float64 `json:"latitude" validate:"required"`
-}
-
 type Credentials struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6,max=25"`
@@ -107,8 +110,9 @@ type UnAuthorizeResponse struct {
 }
 
 type ParticipantType struct {
-	UserId string `json:"userId" validate:"required"`
-	RoomId string `json:"roomId" validate:"required"`
+	UserId     string `json:"userId" validate:"required"`
+	ReceiverId string `json:"receiverId" validate:"required"`
+	RoomId     string `json:"roomId" validate:"required"`
 }
 
 type MessageBody struct {

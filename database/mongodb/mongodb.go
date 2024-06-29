@@ -32,13 +32,13 @@ func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions, C
 	return records, nil
 }
 
-func GetOne[T data_type.RecordType](filter bson.M, Collection string) (*T, error) {
+func GetOne[T data_type.RecordType](filter bson.M, opts *options.FindOneOptions, Collection string) (*T, error) {
 	var record T
 	collection := database.MongoDB.Database(Database).Collection(Collection)
 	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
 	defer cancel()
 
-	errCur := collection.FindOne(ctx, filter).Decode(&record)
+	errCur := collection.FindOne(ctx, filter, opts).Decode(&record)
 	if errCur != nil {
 		return nil, errCur
 	}

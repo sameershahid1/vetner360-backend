@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -36,7 +37,8 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var filter = bson.M{"email": creds.Email}
-	record, err := mongodb.GetOne[model.User](filter, "users")
+	opts := options.FindOneOptions{}
+	record, err := mongodb.GetOne[model.User](filter, &opts, "users")
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		jsonMessage, err := helping.JsonEncode("Invalid email")
@@ -97,8 +99,8 @@ func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Req
 	if err != nil {
 		return
 	}
-
-	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Account already exists")
@@ -168,8 +170,8 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-
-	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email}, "users")
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Doctor already exists")
@@ -203,6 +205,8 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 		"fatherName":   requestBody.FatherName,
 		"registration": requestBody.Registration,
 		"clinicName":   requestBody.ClinicName,
+		"experience":   requestBody.Experience,
+		"bio":          requestBody.Bio,
 		"location":     location,
 		"token":        id.String(),
 		"roleId":       "665cec7fc6206b06eddaacca",
