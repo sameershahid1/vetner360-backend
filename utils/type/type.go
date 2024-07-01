@@ -41,6 +41,10 @@ type DoctorRequestType struct {
 	Bio          string  `json:"bio" validate:"required"`
 }
 
+type DoctorStatusRequestType struct {
+	Status string `json:"status" validate:"required"`
+}
+
 type PetPostRequestType struct {
 	UserId     string `json:"userId" validate:"required"`
 	Name       string `json:"name" validate:"required,min=3,max=25"`
@@ -120,4 +124,9 @@ type MessageBody struct {
 	RoomId   string `json:"roomId"`
 	Content  string `json:"content"`
 	Type     string `json:"type"`
+}
+
+type ContactMessageType struct {
+	Email   string `json:"email" validate:"required"`
+	Message string `json:"message" validate:"required"`
 }

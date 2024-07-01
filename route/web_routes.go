@@ -2,6 +2,8 @@ package routes
 
 import (
 	"vetner360-backend/controller"
+	"vetner360-backend/controller/mobile_controller"
+	"vetner360-backend/controller/web_controller"
 	custom_middleware "vetner360-backend/middleware"
 
 	"github.com/go-chi/chi/v5"
@@ -15,50 +17,47 @@ func HandleWebRoutes(router chi.Router) {
 	router.Group(func(protectedRoute chi.Router) {
 		protectedRoute.Use(custom_middleware.VerifyJWTMiddleware)
 
-		protectedRoute.Route("/pet-owner", func(moduleRoute chi.Router) {
-			moduleRoute.Post("/list", controller.GetPetOwners)
-			moduleRoute.Post("/", controller.PostPetOwner)
-			moduleRoute.Patch("/{id}", controller.PatchPetOwner)
-			moduleRoute.Delete("/{id}", controller.DeletePetOwner)
+		protectedRoute.Route("/user", func(moduleRoute chi.Router) {
+			moduleRoute.Post("/list", web_controller.GetUser)
+			moduleRoute.Post("/", web_controller.PostUser)
+			moduleRoute.Patch("/{id}", web_controller.PatchUser)
+			moduleRoute.Delete("/{id}", web_controller.DeleteUser)
 		})
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetDoctors)
-			moduleRoute.Post("/", controller.GetDoctors)
-			moduleRoute.Patch("/{id}", controller.GetDoctors)
-			moduleRoute.Delete("/{id}", controller.GetDoctors)
+			moduleRoute.Get("/", controller.GetDoctor)
+			moduleRoute.Post("/", controller.PostDoctor)
+			moduleRoute.Patch("/{id}", controller.PatchDoctor)
+			moduleRoute.Patch("/status/{id}", controller.PatchDoctor)
+			moduleRoute.Delete("/{id}", controller.DeleteDoctor)
 		})
 
-		protectedRoute.Route("/pets", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetProfile)
-			moduleRoute.Post("/", controller.GetProfile)
-			moduleRoute.Patch("/{id}", controller.GetProfile)
-			moduleRoute.Delete("/{id}", controller.GetProfile)
-		})
+		protectedRoute.Route("/pet", func(moduleRoute chi.Router) {
+			moduleRoute.Post("/my-pet/{userId}", controller.GetMyPetList)
+			moduleRoute.Post("/", controller.PostPet)
+			moduleRoute.Patch("/{id}", controller.PatchPet)
+			moduleRoute.Delete("/{userId}/{id}", controller.DeletePet)
 
-		protectedRoute.Route("/Guests", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetGuests)
-			moduleRoute.Post("/", controller.GetGuests)
-			moduleRoute.Patch("/{id}", controller.GetGuests)
-			moduleRoute.Delete("/{id}", controller.GetGuests)
+			moduleRoute.Route("/activity", func(subModuleRoute chi.Router) {
+				subModuleRoute.Post("/list/{petId}", mobile_controller.GetActivityList)
+				subModuleRoute.Post("/", mobile_controller.PostActivity)
+				subModuleRoute.Patch("/{id}", mobile_controller.PatchActivity)
+				subModuleRoute.Delete("/{petId}/{id}", mobile_controller.DeleteActivity)
+			})
 		})
 
 		protectedRoute.Route("/role", func(moduleRoute chi.Router) {
-			moduleRoute.Post("/list", controller.GetRoles)
-			moduleRoute.Post("/", controller.PostRoleOwner)
-			moduleRoute.Patch("/{id}", controller.GetRoles)
-			moduleRoute.Delete("/{id}", controller.GetRoles)
+			moduleRoute.Post("/list", web_controller.GetRoles)
+			moduleRoute.Post("/", web_controller.PostRoleOwner)
+			moduleRoute.Patch("/{id}", web_controller.GetRoles)
+			moduleRoute.Delete("/{id}", web_controller.GetRoles)
 		})
 
-		// protectedRoute.Route("/permission", func(moduleRoute chi.Router) {
-		// 	moduleRoute.Get("/", controller.GetPermissions)
-		// 	moduleRoute.Post("/", controller.GetPermissions)
-		// 	moduleRoute.Patch("/{id}", controller.GetPermissions)
-		// 	moduleRoute.Delete("/{id}", controller.GetPermissions)
-		// })
-
 		protectedRoute.Route("/contact-message", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetContactMessages)
+			moduleRoute.Post("/list", web_controller.GetContactMessage)
+			moduleRoute.Post("/", web_controller.PostContactMessage)
+			moduleRoute.Patch("/{id}", web_controller.PatchContactMessage)
+			moduleRoute.Delete("/{id}", web_controller.DeleteContactMessage)
 		})
 
 		protectedRoute.Route("/profile", func(moduleRoute chi.Router) {

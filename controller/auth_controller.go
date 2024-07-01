@@ -85,7 +85,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func PetOwnerORGuestRegistration(response http.ResponseWriter, request *http.Request) {
+func UserRegistration(response http.ResponseWriter, request *http.Request) {
 	id := uuid.New()
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)

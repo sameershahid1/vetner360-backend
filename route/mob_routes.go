@@ -2,6 +2,7 @@ package routes
 
 import (
 	"vetner360-backend/controller"
+	"vetner360-backend/controller/mobile_controller"
 	custom_middleware "vetner360-backend/middleware"
 
 	"github.com/go-chi/chi/v5"
@@ -28,22 +29,23 @@ func HandleMobileRoutes(router chi.Router) {
 			moduleRoute.Delete("/{userId}/{id}", controller.DeletePet)
 
 			moduleRoute.Route("/activity", func(subModuleRoute chi.Router) {
-				subModuleRoute.Post("/list/{petId}", controller.GetActivityList)
-				subModuleRoute.Post("/", controller.PostActivity)
-				subModuleRoute.Patch("/{id}", controller.PatchActivity)
-				subModuleRoute.Delete("/{petId}/{id}", controller.DeleteActivity)
+				subModuleRoute.Post("/list/{petId}", mobile_controller.GetActivityList)
+				subModuleRoute.Post("/", mobile_controller.PostActivity)
+				subModuleRoute.Patch("/{id}", mobile_controller.PatchActivity)
+				subModuleRoute.Delete("/{petId}/{id}", mobile_controller.DeleteActivity)
 			})
 		})
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
 			moduleRoute.Get("/nearest", controller.GetNearestDoctors)
+			moduleRoute.Get("/search-location", controller.GetNearestDoctors)
 		})
 
 		protectedRoute.Route("/chat", func(moduleRoute chi.Router) {
-			moduleRoute.Post("/participant/{userId}", controller.GetChatParticipant)
-			moduleRoute.Post("/chat-participant/add", controller.AddParticipant)
-			moduleRoute.Get("/messages/{roomId}", controller.GetChatMessages)
-			moduleRoute.Get("/messages/latest/{roomId}", controller.GetLatestMessage)
+			moduleRoute.Post("/participant/{userId}", mobile_controller.GetChatParticipant)
+			moduleRoute.Post("/chat-participant/add", mobile_controller.AddParticipant)
+			moduleRoute.Get("/messages/{roomId}", mobile_controller.GetChatMessages)
+			moduleRoute.Get("/messages/latest/{roomId}", mobile_controller.GetLatestMessage)
 		})
 
 		// protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {
@@ -57,7 +59,7 @@ func HandleMobileRoutes(router chi.Router) {
 
 	router.Group(func(publicRoute chi.Router) {
 		publicRoute.Post("/login", controller.SignIn)
-		publicRoute.Post("/user-registration", controller.PetOwnerORGuestRegistration)
+		publicRoute.Post("/user-registration", controller.UserRegistration)
 		publicRoute.Post("/doctor-registration", controller.DoctorRegistration)
 	})
 }

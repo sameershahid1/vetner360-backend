@@ -111,7 +111,6 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 
 func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
-
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {

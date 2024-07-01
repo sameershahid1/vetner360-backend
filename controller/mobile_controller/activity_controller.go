@@ -1,4 +1,4 @@
-package controller
+package mobile_controller
 
 import (
 	"encoding/json"

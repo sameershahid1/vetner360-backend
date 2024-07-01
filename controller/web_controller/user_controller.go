@@ -1,7 +1,8 @@
-package controller
+package web_controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 	"vetner360-backend/database/mongodb"
@@ -13,11 +14,21 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func GetRoles(response http.ResponseWriter, request *http.Request) {
+func GetUser(response http.ResponseWriter, request *http.Request) {
+	query := request.URL.Query()
+	if query["userType"] == nil {
+		helping.InternalServerError(response, errors.New("missing userType query"))
+		return
+	}
+	if query["userType"][0] == "petOwner" || query["userType"][0] == "guest" {
+		helping.InternalServerError(response, errors.New("incorrect userType query"))
+		return
+	}
 
-	var requestBody data_type.PaginationType[model.Role]
+	var requestBody data_type.PaginationType[model.User]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
@@ -30,20 +41,29 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var filter = bson.M{}
+	userType := query["userType"][0]
+	roleID := ""
+	if userType == "petOwner" {
+		roleID = "665ceb8baf682359fe5990a8"
+	}
+	if userType == "guest" {
+		roleID = "665cecbdc6206b06eddaaccb"
+	}
+
+	var filter = bson.M{"roleId": roleID}
 	page := requestBody.Page
 	limit := requestBody.Limit
 	opts := options.FindOptions{}
 	opts.SetSkip(int64((page - 1) * limit))
 	opts.SetLimit(int64(limit))
 
-	records, err := mongodb.GetAll[model.Role](&filter, &opts, "roles")
+	records, err := mongodb.GetAll[model.User](&filter, &opts, "users")
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully Completed Request", Records: &records}
+	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully Completed Request", Records: &records}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -56,75 +76,9 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
+func PostUser(response http.ResponseWriter, request *http.Request) {
 	id := uuid.New()
-	var requestBody data_type.RoleRequestType
-	err := json.NewDecoder(request.Body).Decode(&requestBody)
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	validate := helping.GetValidator()
-	err = helping.ValidatingData(requestBody, response, validate)
-	if err != nil {
-		return
-	}
-	opts := options.FindOneOptions{}
-	isSame, _ := mongodb.GetOne[model.Role](bson.M{"name": requestBody.Name}, &opts, "roles")
-	if isSame != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
-		return
-	}
-
-	var newRecord = bson.M{
-		"name":        requestBody.Name,
-		"description": requestBody.Description,
-		"token":       id,
-		"created_at":  time.Now(),
-	}
-	_, err = mongodb.Post[model.Role](newRecord, "roles")
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully Completed Request"}
-	jsonData, err := json.Marshal(requestResponse)
-
-	if err != nil {
-		helping.InternalServerError(response, err)
-		return
-	}
-
-	response.WriteHeader(http.StatusOK)
-	response.Header().Add("Content-Type", "application/json")
-	response.Write(jsonData)
-}
-
-func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
-	var id = chi.URLParam(request, "id")
-	var filter = bson.M{"token": id}
-	opts := options.FindOneOptions{}
-	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
-	if isSame == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
-		return
-	}
-
-	var requestBody data_type.RoleRequestType
+	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
@@ -137,18 +91,44 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var newRecord = bson.M{
-		"name":        requestBody.Name,
-		"description": requestBody.Description,
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, &opts, "users")
+	if isSameUser != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("User already exists")
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
 	}
 
-	_, err = mongodb.Patch[model.Role](filter, newRecord, "roles")
+	cost := bcrypt.DefaultCost
+	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
+
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully updated Role"}
+	var newRecord = bson.M{
+		"firstName":  requestBody.FirstName,
+		"lastName":   requestBody.LastName,
+		"email":      requestBody.Email,
+		"phoneNo":    requestBody.PhoneNo,
+		"password":   string(bytes),
+		"created_at": time.Now(),
+		"roleId":     "665ce8afd343136949deade1",
+		"token":      id.String(),
+	}
+	_, err = mongodb.Post[model.User](newRecord, "users")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully Completed Request"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
@@ -161,14 +141,15 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func DeleteRoleOwner(response http.ResponseWriter, request *http.Request) {
+func PatchUser(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
+
 	opts := options.FindOneOptions{}
-	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
-	if isSame == nil {
+	isSameUser, _ := mongodb.GetOne[model.User](filter, &opts, "users")
+	if isSameUser == nil {
 		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role does not exists")
+		jsonResponse, err := helping.JsonEncode("User does not exists")
 		if err != nil {
 			helping.InternalServerError(response, err)
 			return
@@ -177,13 +158,81 @@ func DeleteRoleOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := mongodb.Delete[model.Role](filter, "roles")
+	var requestBody data_type.PetOwnerRequestType
+	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
 		helping.InternalServerError(response, err)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully deleted Role"}
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(requestBody, response, validate)
+	if err != nil {
+		return
+	}
+
+	err1 := bcrypt.CompareHashAndPassword([]byte(isSameUser.Password), []byte(requestBody.Password))
+	if err1 != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("Invalid Password")
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+
+	var newRecord = bson.M{
+		"firstName": requestBody.FirstName,
+		"lastName":  requestBody.LastName,
+		"email":     requestBody.Email,
+		"phoneNo":   requestBody.PhoneNo,
+		"password":  requestBody.Password,
+	}
+
+	_, err = mongodb.Patch[model.User](filter, newRecord, "users")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully updated pet owner"}
+	jsonData, err := json.Marshal(requestResponse)
+
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Add("Content-Type", "application/json")
+	response.Write(jsonData)
+}
+
+func DeleteUser(response http.ResponseWriter, request *http.Request) {
+	var id = chi.URLParam(request, "id")
+	var filter = bson.M{"token": id}
+	opts := options.FindOneOptions{}
+	isSameUser, _ := mongodb.GetOne[model.User](filter, &opts, "users")
+	if isSameUser == nil {
+		response.WriteHeader(http.StatusBadRequest)
+		jsonResponse, err := helping.JsonEncode("User does not exists")
+		if err != nil {
+			helping.InternalServerError(response, err)
+			return
+		}
+		response.Write(jsonResponse)
+		return
+	}
+
+	_, err := mongodb.Delete[model.User](filter, "users")
+	if err != nil {
+		helping.InternalServerError(response, err)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.User]{Status: true, Message: "Successfully deleted pet owner"}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {

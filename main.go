@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 	"vetner360-backend/controller"
+	"vetner360-backend/controller/mobile_controller"
 	"vetner360-backend/database"
 	routes "vetner360-backend/route"
 
@@ -52,21 +53,21 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Timeout(time.Second * 60))
 
-	controller.SocketServer.OnConnect("/", controller.SocketConnection)
-	controller.SocketServer.OnEvent("/", "message", controller.EventMessage)
-	controller.SocketServer.OnEvent("/", "join-room", controller.JoinRoom)
-	controller.SocketServer.OnEvent("/", "leave-room", controller.LeaveRoom)
-	controller.SocketServer.OnError("/", controller.SocketError)
-	controller.SocketServer.OnDisconnect("/", controller.SocketDisconnect)
+	mobile_controller.SocketServer.OnConnect("/", mobile_controller.SocketConnection)
+	mobile_controller.SocketServer.OnEvent("/", "message", mobile_controller.EventMessage)
+	mobile_controller.SocketServer.OnEvent("/", "join-room", mobile_controller.JoinRoom)
+	mobile_controller.SocketServer.OnEvent("/", "leave-room", mobile_controller.LeaveRoom)
+	mobile_controller.SocketServer.OnError("/", mobile_controller.SocketError)
+	mobile_controller.SocketServer.OnDisconnect("/", mobile_controller.SocketDisconnect)
 
 	go func() {
-		if err := controller.SocketServer.Serve(); err != nil {
+		if err := mobile_controller.SocketServer.Serve(); err != nil {
 			log.Fatalf("socketio listen error: %s\n", err)
 		}
 	}()
-	defer controller.SocketServer.Close()
+	defer mobile_controller.SocketServer.Close()
 
-	router.Handle("/socket.io/", controller.SocketServer)
+	router.Handle("/socket.io/", mobile_controller.SocketServer)
 	router.Mount("/debug", middleware.Profiler())
 	router.Route("/web/api", routes.HandleWebRoutes)
 	router.Route("/mobile/api", routes.HandleMobileRoutes)
