@@ -2,6 +2,7 @@ package web_controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 	"vetner360-backend/database/mongodb"
@@ -20,7 +21,7 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Role]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -39,15 +40,21 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Role](&filter, &opts, "roles")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully Completed Request", Records: &records}
+	total, err := mongodb.TotalDocs[model.User](&filter, "users")
+	if err != nil {
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.Role]{Status: true, Message: "Successfully Completed Request", Records: &records, Count: &total}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -56,12 +63,12 @@ func GetRoles(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
+func PostRole(response http.ResponseWriter, request *http.Request) {
 	id := uuid.New()
 	var requestBody data_type.RoleRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -73,25 +80,19 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSame, _ := mongodb.GetOne[model.Role](bson.M{"name": requestBody.Name}, &opts, "roles")
 	if isSame != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("role already exists"), http.StatusInternalServerError)
 		return
 	}
 
 	var newRecord = bson.M{
 		"name":        requestBody.Name,
 		"description": requestBody.Description,
-		"token":       id,
+		"token":       id.String(),
 		"created_at":  time.Now(),
 	}
 	_, err = mongodb.Post[model.Role](newRecord, "roles")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -99,7 +100,7 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -108,26 +109,21 @@ func PostRoleOwner(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
+func PatchRole(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
+
 	opts := options.FindOneOptions{}
 	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
 	if isSame == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("role does not exists"), http.StatusInternalServerError)
 		return
 	}
 
 	var requestBody data_type.RoleRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -137,14 +133,14 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var newRecord = bson.M{
+	var updateRecord = bson.M{
 		"name":        requestBody.Name,
 		"description": requestBody.Description,
 	}
 
-	_, err = mongodb.Patch[model.Role](filter, newRecord, "roles")
+	_, err = mongodb.Patch[model.Role](filter, updateRecord, "roles")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -152,7 +148,7 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -161,25 +157,20 @@ func PatchRoleOwner(response http.ResponseWriter, request *http.Request) {
 	response.Write(jsonData)
 }
 
-func DeleteRoleOwner(response http.ResponseWriter, request *http.Request) {
+func DeleteRole(response http.ResponseWriter, request *http.Request) {
 	var id = chi.URLParam(request, "id")
 	var filter = bson.M{"token": id}
+
 	opts := options.FindOneOptions{}
 	isSame, _ := mongodb.GetOne[model.Role](filter, &opts, "roles")
 	if isSame == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Role does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("role does not exists"), http.StatusInternalServerError)
 		return
 	}
 
 	_, err := mongodb.Delete[model.Role](filter, "roles")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -187,7 +178,7 @@ func DeleteRoleOwner(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

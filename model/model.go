@@ -30,15 +30,16 @@ type Doctor struct {
 	Email        string             `json:"email" bson:"email"`
 	PhoneNo      string             `json:"phoneNo" bson:"phoneNo"`
 	Password     string             `json:"password" bson:"password"`
-	RoleId       string             `json:"roleId" bson:"roleId"`
-	Token        string             `json:"token" bson:"token"`
-	CreatedAt    time.Time          `json:"created_at" bson:"created_at"`
 	FatherName   string             `json:"fatherName" bson:"fatherName"`
 	Registration string             `json:"registration" bson:"registration"`
 	ClinicName   string             `json:"clinicName" bson:"clinicName"`
 	Location     Location           `json:"location" bson:"location"`
 	Experience   string             `json:"experience" bson:"experience"`
 	Bio          string             `json:"bio" bson:"bio"`
+	Status       string             `json:"accountStatus" bson:"accountStatus"`
+	Token        string             `json:"token" bson:"token"`
+	RoleId       string             `json:"roleId" bson:"roleId"`
+	CreatedAt    time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Review struct {

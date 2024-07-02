@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -20,13 +21,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	var creds data_type.Credentials
 	err := json.NewDecoder(request.Body).Decode(&creds)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		jsonMessage, err := helping.JsonEncode("Internal server error")
-		if err != nil {
-			response.Write([]byte("Internal server error"))
-			return
-		}
-		response.Write(jsonMessage)
+		helping.InternalServerError(response, errors.New("internal server error"), http.StatusInternalServerError)
 		return
 	}
 
@@ -40,13 +35,7 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	record, err := mongodb.GetOne[model.User](filter, &opts, "users")
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		jsonMessage, err := helping.JsonEncode("Invalid email")
-		if err != nil {
-			response.Write([]byte("Internal server error"))
-			return
-		}
-		response.Write(jsonMessage)
+		helping.InternalServerError(response, errors.New("invalid email"), http.StatusBadRequest)
 		return
 	}
 
@@ -57,18 +46,65 @@ func SignIn(response http.ResponseWriter, request *http.Request) {
 		roleType = 2
 	} else if record.RoleId == "665cec7fc6206b06eddaacca" {
 		roleType = 3
+	} else {
+		helping.InternalServerError(response, errors.New("invalid email"), http.StatusBadRequest)
+		return
 	}
 
 	expirationTime := time.Now().Add(time.Hour * 24 * 7)
 	tokenString, err := helping.JwtGenerator(response, &creds, record.Password, expirationTime)
 	if err != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonMessage, err := helping.JsonEncode(err.Error())
-		if err != nil {
-			response.Write([]byte("Internal server error"))
-			return
-		}
-		response.Write(jsonMessage)
+		helping.InternalServerError(response, err, http.StatusBadRequest)
+		return
+	}
+
+	var signData = data_type.SignInType{Message: "Successfully Login", Token: &tokenString, UserId: record.Token, RoleType: roleType}
+	var jsonData, err1 = json.Marshal(signData)
+
+	if err1 != nil {
+		log.Fatal(err1.Error())
+		response.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Write(jsonData)
+}
+
+func WebSignIn(response http.ResponseWriter, request *http.Request) {
+	var creds data_type.Credentials
+	err := json.NewDecoder(request.Body).Decode(&creds)
+	if err != nil {
+		helping.InternalServerError(response, errors.New("internal server error"), http.StatusInternalServerError)
+		return
+	}
+
+	validate := helping.GetValidator()
+	err = helping.ValidatingData(creds, response, validate)
+	if err != nil {
+		return
+	}
+
+	var filter = bson.M{"email": creds.Email}
+	opts := options.FindOneOptions{}
+	record, err := mongodb.GetOne[model.User](filter, &opts, "users")
+	if err != nil {
+		helping.InternalServerError(response, errors.New("invalid email"), http.StatusBadRequest)
+		return
+	}
+
+	var roleType int = 0
+	if record.RoleId == "66831300e116dc9d69e8bf99" {
+		roleType = 4
+	} else {
+		helping.InternalServerError(response, errors.New("invalid email"), http.StatusBadRequest)
+		return
+	}
+
+	expirationTime := time.Now().Add(time.Hour * 24 * 7)
+	tokenString, err := helping.JwtGenerator(response, &creds, record.Password, expirationTime)
+	if err != nil {
+		helping.InternalServerError(response, errors.New("internal server side"), http.StatusInternalServerError)
 		return
 	}
 
@@ -90,7 +126,7 @@ func UserRegistration(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -99,16 +135,21 @@ func UserRegistration(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
+
+	roleID := ""
+	if requestBody.UserType == 1 {
+		roleID = "665ceb8baf682359fe5990a8"
+	} else if requestBody.UserType == 2 {
+		roleID = "665cecbdc6206b06eddaaccb"
+	} else {
+		helping.InternalServerError(response, errors.New("invalid userId"), http.StatusBadRequest)
+		return
+	}
+
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.User](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Account already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("account already exists"), http.StatusBadRequest)
 		return
 	}
 
@@ -116,15 +157,8 @@ func UserRegistration(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
-	}
-
-	roleID := ""
-	if requestBody.UserType == 1 {
-		roleID = "665ceb8baf682359fe5990a8"
-	} else {
-		roleID = "665cecbdc6206b06eddaaccb"
 	}
 
 	var newRecord = bson.M{
@@ -137,9 +171,10 @@ func UserRegistration(response http.ResponseWriter, request *http.Request) {
 		"roleId":     roleID,
 		"created_at": time.Now(),
 	}
+
 	_, err = mongodb.Post[model.User](newRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -147,7 +182,7 @@ func UserRegistration(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -161,7 +196,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -173,13 +208,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Doctor already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("account already exists"), http.StatusBadRequest)
 		return
 	}
 
@@ -187,7 +216,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -214,7 +243,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.Doctor](newRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -222,7 +251,7 @@ func DoctorRegistration(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

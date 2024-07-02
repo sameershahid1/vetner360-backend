@@ -105,7 +105,7 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Participant]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -127,7 +127,7 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Participant](&filter, &opts, "participants")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 	if records == nil {
@@ -152,7 +152,7 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 
 	userRecords, err := mongodb.GetAll[model.Doctor](&userFilter, &opts, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -164,7 +164,7 @@ func GetChatParticipant(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -181,7 +181,7 @@ func GetChatMessages(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Message](&filter, &opts, "messages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -193,7 +193,7 @@ func GetChatMessages(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -210,7 +210,7 @@ func GetLatestMessage(response http.ResponseWriter, request *http.Request) {
 
 	record, err := mongodb.GetOne[model.Message](filter, &opts, "messages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -218,7 +218,7 @@ func GetLatestMessage(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -232,7 +232,7 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.ParticipantType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -255,7 +255,7 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Participants already exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -271,7 +271,7 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.Participant](newRecord, "participants")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -279,7 +279,7 @@ func AddParticipant(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

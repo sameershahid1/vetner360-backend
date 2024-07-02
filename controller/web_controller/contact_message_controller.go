@@ -19,7 +19,7 @@ func GetContactMessage(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.ContactMessage]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -38,15 +38,21 @@ func GetContactMessage(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.ContactMessage](&filter, &opts, "contactmessages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.ContactMessage]{Status: true, Message: "Successfully Completed Request", Records: &records}
+	total, err := mongodb.TotalDocs[model.User](&filter, "users")
+	if err != nil {
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.ContactMessage]{Status: true, Message: "Successfully Completed Request", Records: &records, Count: &total}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -60,7 +66,7 @@ func PostContactMessage(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.ContactMessageType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -78,7 +84,7 @@ func PostContactMessage(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.ContactMessage](newRecord, "contactmessages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -86,7 +92,7 @@ func PostContactMessage(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -105,7 +111,7 @@ func PatchContactMessage(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Contact Message does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -115,7 +121,7 @@ func PatchContactMessage(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.ContactMessageType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -132,7 +138,7 @@ func PatchContactMessage(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.User](filter, updateRecord, "contactmessages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -140,7 +146,7 @@ func PatchContactMessage(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -158,7 +164,7 @@ func DeleteContactMessage(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Contact Message does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -167,7 +173,7 @@ func DeleteContactMessage(response http.ResponseWriter, request *http.Request) {
 
 	_, err := mongodb.Delete[model.ContactMessage](filter, "contactmessages")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -175,7 +181,7 @@ func DeleteContactMessage(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

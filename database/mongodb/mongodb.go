@@ -84,3 +84,16 @@ func Delete[T data_type.RecordType](filter bson.M, Collection string) (*mongo.De
 
 	return result, nil
 }
+
+func TotalDocs[T data_type.RecordType](filter *bson.M, Collection string) (int64, error) {
+	collection := database.MongoDB.Database(Database).Collection(Collection)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
+	defer cancel()
+
+	result, errCur := collection.CountDocuments(ctx, filter)
+	if errCur != nil {
+		return 0, errCur
+	}
+
+	return result, nil
+}

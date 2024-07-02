@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,7 +23,7 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Pets]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -42,7 +43,7 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Pets](&filter, &opts, "pets")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -54,7 +55,7 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -68,7 +69,7 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Pets]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -78,7 +79,7 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	records, err := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -86,7 +87,7 @@ func GetPetDetail(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -100,7 +101,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PetPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -112,20 +113,14 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name}, &opts, "pets")
 	if isSamePets != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("error: pet already exists"), http.StatusBadRequest)
 		return
 	}
 
 	imageBytes, err := base64.StdEncoding.DecodeString(requestBody.Image)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -133,7 +128,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	filePath := fmt.Sprintf("public/%s", filename)
 	err = os.WriteFile(filePath, imageBytes, 0644)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -164,7 +159,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.Pets](newRecord, "pets")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -172,7 +167,7 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -187,7 +182,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PetPatchRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -203,7 +198,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -224,7 +219,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.Pets](filter, updateRecord, "pets")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -232,7 +227,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -251,7 +246,7 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Pets does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -260,7 +255,7 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 
 	_, err := mongodb.Delete[model.Pets](filter, "pets")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -268,7 +263,7 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

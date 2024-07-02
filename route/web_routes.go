@@ -25,7 +25,7 @@ func HandleWebRoutes(router chi.Router) {
 		})
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
-			moduleRoute.Get("/", controller.GetDoctor)
+			moduleRoute.Post("/list", controller.GetDoctor)
 			moduleRoute.Post("/", controller.PostDoctor)
 			moduleRoute.Patch("/{id}", controller.PatchDoctor)
 			moduleRoute.Patch("/status/{id}", controller.PatchDoctor)
@@ -48,9 +48,9 @@ func HandleWebRoutes(router chi.Router) {
 
 		protectedRoute.Route("/role", func(moduleRoute chi.Router) {
 			moduleRoute.Post("/list", web_controller.GetRoles)
-			moduleRoute.Post("/", web_controller.PostRoleOwner)
-			moduleRoute.Patch("/{id}", web_controller.GetRoles)
-			moduleRoute.Delete("/{id}", web_controller.GetRoles)
+			moduleRoute.Post("/", web_controller.PostRole)
+			moduleRoute.Patch("/{id}", web_controller.PatchRole)
+			moduleRoute.Delete("/{id}", web_controller.DeleteRole)
 		})
 
 		protectedRoute.Route("/contact-message", func(moduleRoute chi.Router) {
@@ -67,6 +67,6 @@ func HandleWebRoutes(router chi.Router) {
 	})
 
 	router.Group(func(publicRoute chi.Router) {
-		publicRoute.Post("/login", controller.SignIn)
+		publicRoute.Post("/login", controller.WebSignIn)
 	})
 }

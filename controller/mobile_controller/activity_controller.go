@@ -21,7 +21,7 @@ func GetActivityList(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Activity]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -49,7 +49,7 @@ func GetActivityList(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Activity](&filter, &opts, "activity")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -61,7 +61,7 @@ func GetActivityList(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -75,7 +75,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -99,7 +99,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity already exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -112,7 +112,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Error parsing Start date string:" + err.Error())
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -124,7 +124,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Error parsing End date string:" + err.Error())
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -143,7 +143,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.Activity](newRecord, "activity")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -151,7 +151,7 @@ func PostActivity(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -166,7 +166,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.ActivityPostRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -191,7 +191,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -204,7 +204,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Error parsing Start date string:" + err.Error())
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -216,7 +216,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Error parsing End date string:" + err.Error())
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -233,7 +233,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.Activity](filter, updateRecord, "activity")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -241,7 +241,7 @@ func PatchActivity(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -260,7 +260,7 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("Activity does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -269,7 +269,7 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 
 	_, err := mongodb.Delete[model.Activity](filter, "activity")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -277,7 +277,7 @@ func DeleteActivity(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

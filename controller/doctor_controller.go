@@ -22,7 +22,7 @@ func GetDoctor(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.Doctor]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -32,7 +32,7 @@ func GetDoctor(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var filter = bson.M{}
+	var filter = bson.M{"roleId": "665cec7fc6206b06eddaacca"}
 	page := requestBody.Page
 	limit := requestBody.Limit
 	opts := options.FindOptions{}
@@ -41,15 +41,21 @@ func GetDoctor(response http.ResponseWriter, request *http.Request) {
 
 	records, err := mongodb.GetAll[model.Doctor](&filter, &opts, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
-	var requestResponse = data_type.Response[model.Doctor]{Status: true, Message: "Successfully Completed Request", Records: &records}
+	total, err := mongodb.TotalDocs[model.User](&filter, "users")
+	if err != nil {
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
+		return
+	}
+
+	var requestResponse = data_type.Response[model.Doctor]{Status: true, Message: "Successfully Completed Request", Records: &records, Count: &total}
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -63,7 +69,7 @@ func PostDoctor(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -75,13 +81,7 @@ func PostDoctor(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.Doctor](bson.M{"email": requestBody.Email}, &opts, "users")
 	if isSameUser != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Doctor already exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("error: doctor already exists"), http.StatusBadRequest)
 		return
 	}
 
@@ -89,7 +89,7 @@ func PostDoctor(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -116,7 +116,7 @@ func PostDoctor(response http.ResponseWriter, request *http.Request) {
 	}
 	_, err = mongodb.Post[model.Doctor](newRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -124,7 +124,7 @@ func PostDoctor(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -138,7 +138,7 @@ func PatchDoctor(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -152,13 +152,7 @@ func PatchDoctor(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.Doctor](filter, &opts, "users")
 	if isSameUser == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("User does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("error: doctor does not exists"), http.StatusBadRequest)
 		return
 	}
 
@@ -166,7 +160,7 @@ func PatchDoctor(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -189,7 +183,7 @@ func PatchDoctor(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.Doctor](filter, updateRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -197,7 +191,7 @@ func PatchDoctor(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -211,7 +205,7 @@ func PatchDoctorStatus(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.DoctorStatusRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -225,13 +219,7 @@ func PatchDoctorStatus(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.Doctor](filter, &opts, "users")
 	if isSameUser == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Doctor does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("error: doctor does not exists"), http.StatusBadRequest)
 		return
 	}
 
@@ -241,7 +229,7 @@ func PatchDoctorStatus(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.Doctor](filter, updateRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -249,7 +237,7 @@ func PatchDoctorStatus(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -264,19 +252,13 @@ func DeleteDoctor(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSameUser, _ := mongodb.GetOne[model.Doctor](filter, &opts, "users")
 	if isSameUser == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("User does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("error: user does not exists"), http.StatusBadRequest)
 		return
 	}
 
 	_, err := mongodb.Delete[model.Doctor](filter, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -284,7 +266,7 @@ func DeleteDoctor(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -298,22 +280,22 @@ func GetNearestDoctors(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOptions{}
 
 	if query["latitude"] == nil {
-		helping.InternalServerError(response, errors.New("missing latitude query"))
+		helping.InternalServerError(response, errors.New("missing latitude query"), http.StatusBadRequest)
 		return
 	}
 	if query["longitude"] == nil {
-		helping.InternalServerError(response, errors.New("missing longitude query"))
+		helping.InternalServerError(response, errors.New("missing longitude query"), http.StatusBadRequest)
 		return
 	}
 
 	latitude, err := strconv.ParseFloat(query["latitude"][0], 32)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 	longitude, err := strconv.ParseFloat(query["longitude"][0], 32)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -336,7 +318,7 @@ func GetNearestDoctors(response http.ResponseWriter, request *http.Request) {
 
 	if err != nil {
 		print(err.Error())
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -348,7 +330,7 @@ func GetNearestDoctors(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

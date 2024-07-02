@@ -18,7 +18,7 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PaginationType[model.User]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -27,7 +27,7 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	records, err := mongodb.GetOne[model.User](filter, &opts, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -35,7 +35,7 @@ func GetProfile(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -50,7 +50,7 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.PetOwnerRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -67,7 +67,7 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -78,7 +78,7 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -92,7 +92,7 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.User](filter, updateRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -100,7 +100,7 @@ func UpdateUserProfile(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -114,7 +114,7 @@ func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 	var requestBody data_type.DoctorRequestType
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -131,7 +131,7 @@ func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		jsonResponse, err := helping.JsonEncode("User does not exists")
 		if err != nil {
-			helping.InternalServerError(response, err)
+			helping.InternalServerError(response, err, http.StatusInternalServerError)
 			return
 		}
 		response.Write(jsonResponse)
@@ -142,7 +142,7 @@ func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), cost)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -165,7 +165,7 @@ func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 
 	_, err = mongodb.Patch[model.Doctor](filter, updateRecord, "users")
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -173,7 +173,7 @@ func UpdateDoctorProfile(response http.ResponseWriter, request *http.Request) {
 	jsonData, err := json.Marshal(requestResponse)
 
 	if err != nil {
-		helping.InternalServerError(response, err)
+		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
 	}
 

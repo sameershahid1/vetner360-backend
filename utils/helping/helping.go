@@ -14,8 +14,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func InternalServerError(response http.ResponseWriter, err error) {
-	response.WriteHeader(http.StatusInternalServerError)
+func InternalServerError(response http.ResponseWriter, err error, statusCode int) {
+	response.WriteHeader(statusCode)
 	jsonData, err := JsonEncode(err.Error())
 	if err != nil {
 		response.Write([]byte("Internal server error"))

@@ -95,6 +95,7 @@ type Response[T RecordType] struct {
 	Message string `json:"message"`
 	Records *[]T   `json:"records,omitempty"`
 	Data    *T     `json:"data,omitempty"`
+	Count   *int64 `json:"count,omitempty"`
 }
 
 type SignInType struct {
