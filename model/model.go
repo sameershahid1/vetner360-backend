@@ -87,13 +87,24 @@ type Pets struct {
 	ImagePath  string             `json:"imagePath" bson:"imagePath"`
 	Breed      string             `json:"breed" bson:"breed"`
 	Note       string             `json:"note" bson:"note"`
-	Age        string             `json:"age" bson:"age"`
 	Weight     string             `json:"weight" bson:"weight"`
 	DietPlan   string             `json:"dietPlan" bson:"dietPlan"`
 	Vaccinated bool               `json:"vaccinated" bson:"vaccinated"`
+	Tags       []string           `json:"tags" bson:"tags"`
 	UserId     string             `json:"userId" bson:"userId"`
 	Token      string             `json:"token" bson:"token"`
 	CreatedAt  time.Time          `json:"created_at" bson:"created_at"`
+}
+
+type PetSell struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	UserId    string             `json:"userId" bson:"userId"`
+	PetId     string             `json:"petId" bson:"petId"`
+	Price     float32            `json:"price" bson:"price"`
+	ContactNo string             `json:"contactNo" bson:"contactNo"`
+	PetDetail *Pets              `json:"petDetail" bson:"petDetail"`
+	Token     string             `json:"token" bson:"token"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type Activity struct {
@@ -125,4 +136,15 @@ type Message struct {
 	Type      string             `json:"type" bson:"type"`
 	Token     string             `json:"token" bson:"token"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
+}
+
+type Appointment struct {
+	ID              primitive.ObjectID `json:"id" bson:"_id"`
+	DoctorID        string             `json:"doctorId" bson:"doctorId"`
+	PetOwnerID      string             `json:"petOwnerId" bson:"petOwnerId"`
+	AppointmentDate time.Time          `json:"appointmentDate"  bson:"appointmentDate"`
+	IsAccepted      bool               `json:"isAccepted" bson:"isAccepted"`
+	Status          string             `json:"status" bson:"status"`
+	Type            string             `json:"type" bson:"type"`
+	CreatedAt       time.Time          `json:"createdAt" bson:"createdAt"`
 }

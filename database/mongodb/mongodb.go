@@ -32,6 +32,26 @@ func GetAll[T data_type.RecordType](filter *bson.M, opts *options.FindOptions, C
 	return records, nil
 }
 
+func GetAllUsingPipeline[T data_type.RecordType](pipeline mongo.Pipeline, opts *options.AggregateOptions, Collection string) ([]T, error) {
+	var records []T
+	collection := database.MongoDB.Database(Database).Collection(Collection)
+	ctx, cancel := context.WithTimeout(context.Background(), database.QueryTimeout*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
 func GetOne[T data_type.RecordType](filter bson.M, opts *options.FindOneOptions, Collection string) (*T, error) {
 	var record T
 	collection := database.MongoDB.Database(Database).Collection(Collection)

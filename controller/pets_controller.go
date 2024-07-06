@@ -65,7 +65,6 @@ func GetMyPetList(response http.ResponseWriter, request *http.Request) {
 }
 
 func GetPetDetail(response http.ResponseWriter, request *http.Request) {
-
 	var requestBody data_type.PaginationType[model.Pets]
 	err := json.NewDecoder(request.Body).Decode(&requestBody)
 	if err != nil {
@@ -110,15 +109,8 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-	opts := options.FindOneOptions{}
-	isSamePets, _ := mongodb.GetOne[model.Pets](bson.M{"name": requestBody.Name}, &opts, "pets")
-	if isSamePets != nil {
-		helping.InternalServerError(response, errors.New("error: pet already exists"), http.StatusBadRequest)
-		return
-	}
 
 	imageBytes, err := base64.StdEncoding.DecodeString(requestBody.Image)
-
 	if err != nil {
 		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
@@ -134,7 +126,6 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 
 	layout := "2006-01-02T15:04:05.999"
 	parsedTime, err := time.Parse(layout, requestBody.BirthDate)
-
 	if err != nil {
 		fmt.Println("Error parsing date string:", err)
 		return
@@ -147,12 +138,12 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 		"birthDate":  parsedTime,
 		"imagePath":  filename,
 		"note":       requestBody.Note,
-		"age":        requestBody.Age,
 		"weight":     requestBody.Weight,
 		"dietPlan":   requestBody.DietPlan,
 		"vaccinated": requestBody.Vaccinated,
 		"type":       "Cat",
 		"breed":      "Persian",
+		"tags":       requestBody.Tags,
 		"userId":     requestBody.UserId,
 		"token":      id.String(),
 		"created_at": time.Now(),
@@ -165,7 +156,6 @@ func PostPet(response http.ResponseWriter, request *http.Request) {
 
 	var requestResponse = data_type.Response[model.Pets]{Status: true, Message: "Successfully Completed Request"}
 	jsonData, err := json.Marshal(requestResponse)
-
 	if err != nil {
 		helping.InternalServerError(response, err, http.StatusInternalServerError)
 		return
@@ -195,13 +185,7 @@ func PatchPet(response http.ResponseWriter, request *http.Request) {
 	var filter = bson.M{"token": id, "userId": requestBody.UserId}
 	isSamePets, _ := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if isSamePets == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err, http.StatusInternalServerError)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("pet does not exists"), http.StatusInternalServerError)
 		return
 	}
 
@@ -243,13 +227,7 @@ func DeletePet(response http.ResponseWriter, request *http.Request) {
 	opts := options.FindOneOptions{}
 	isSamePets, _ := mongodb.GetOne[model.Pets](filter, &opts, "pets")
 	if isSamePets == nil {
-		response.WriteHeader(http.StatusBadRequest)
-		jsonResponse, err := helping.JsonEncode("Pets does not exists")
-		if err != nil {
-			helping.InternalServerError(response, err, http.StatusInternalServerError)
-			return
-		}
-		response.Write(jsonResponse)
+		helping.InternalServerError(response, errors.New("pet does not exists"), http.StatusInternalServerError)
 		return
 	}
 

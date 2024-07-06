@@ -7,7 +7,9 @@ import (
 )
 
 type RecordType interface {
-	model.User | model.Doctor | model.Role | model.Permission | model.ContactMessage | model.Pets | model.Participant | model.Message | model.Activity
+	model.User | model.Doctor | model.Role | model.Permission |
+		model.ContactMessage | model.Pets | model.Participant |
+		model.Message | model.Activity | model.Review | model.PetSell
 }
 
 type PaginationType[T RecordType] struct {
@@ -46,17 +48,24 @@ type DoctorStatusRequestType struct {
 }
 
 type PetPostRequestType struct {
-	UserId     string `json:"userId" validate:"required"`
-	Name       string `json:"name" validate:"required,min=3,max=25"`
-	NickName   string `json:"nickName" validate:"required,min=3,max=25"`
-	Gender     string `json:"gender" validate:"required"`
-	BirthDate  string `json:"birthDate" validate:"required"`
-	Image      string `json:"image" validate:"required"`
-	Note       string `json:"note" validate:"required,min=3"`
-	Age        string `json:"age" validate:"required,number"`
-	Weight     string `json:"weight" validate:"required,number"`
-	DietPlan   string `json:"dietPlan" validate:"required,min=3"`
-	Vaccinated bool   `json:"vaccinated" validate:"omitempty"`
+	UserId     string   `json:"userId" validate:"required"`
+	Name       string   `json:"name" validate:"required,min=3,max=25"`
+	NickName   string   `json:"nickName" validate:"required,min=3,max=25"`
+	Gender     string   `json:"gender" validate:"required"`
+	BirthDate  string   `json:"birthDate" validate:"required"`
+	Image      string   `json:"image" validate:"required"`
+	Note       string   `json:"note" validate:"required,min=3"`
+	Weight     string   `json:"weight" validate:"required,number"`
+	DietPlan   string   `json:"dietPlan" validate:"required,min=3"`
+	Vaccinated bool     `json:"vaccinated" validate:"omitempty"`
+	Tags       []string `json:"tags" validate:"required"`
+}
+
+type PetSellRequestType struct {
+	UserId    string  `json:"userId" validate:"required"`
+	PetId     string  `json:"petId" validate:"required"`
+	Price     float32 `json:"price" validate:"required"`
+	ContactNo string  `json:"contactNo" validate:"required"`
 }
 
 type ActivityPostRequestType struct {

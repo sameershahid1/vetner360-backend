@@ -34,6 +34,7 @@ func HandleMobileRoutes(router chi.Router) {
 				subModuleRoute.Patch("/{id}", mobile_controller.PatchActivity)
 				subModuleRoute.Delete("/{petId}/{id}", mobile_controller.DeleteActivity)
 			})
+
 		})
 
 		protectedRoute.Route("/doctor", func(moduleRoute chi.Router) {
@@ -46,6 +47,20 @@ func HandleMobileRoutes(router chi.Router) {
 			moduleRoute.Post("/chat-participant/add", mobile_controller.AddParticipant)
 			moduleRoute.Get("/messages/{roomId}", mobile_controller.GetChatMessages)
 			moduleRoute.Get("/messages/latest/{roomId}", mobile_controller.GetLatestMessage)
+		})
+
+		protectedRoute.Route("/appointment", func(moduleRoute chi.Router) {
+			moduleRoute.Post("/list/", mobile_controller.GetActivityList)
+			moduleRoute.Post("/", mobile_controller.PostActivity)
+			moduleRoute.Patch("/{id}", mobile_controller.PatchActivity)
+			moduleRoute.Delete("/{petId}/{id}", mobile_controller.DeleteActivity)
+		})
+
+		protectedRoute.Route("/sell", func(moduleRoute chi.Router) {
+			moduleRoute.Post("/list/{userId}", mobile_controller.GetMySellPets)
+			moduleRoute.Post("/", mobile_controller.PostMyPetToSell)
+			moduleRoute.Patch("/{id}", mobile_controller.PatchMyPetOnSell)
+			moduleRoute.Delete("/{id}", mobile_controller.DeleteMyPetOnSell)
 		})
 
 		// protectedRoute.Route("/health-report", func(moduleRoute chi.Router) {
@@ -61,5 +76,9 @@ func HandleMobileRoutes(router chi.Router) {
 		publicRoute.Post("/login", controller.SignIn)
 		publicRoute.Post("/user-registration", controller.UserRegistration)
 		publicRoute.Post("/doctor-registration", controller.DoctorRegistration)
+
+		publicRoute.Post("/doctor/latest/clinic", mobile_controller.GetLatestDoctorClinic)
+		publicRoute.Post("/pet/latest/{type}", mobile_controller.GetLatestPetByType)
+
 	})
 }
