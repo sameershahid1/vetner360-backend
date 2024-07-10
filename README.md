@@ -7,6 +7,7 @@
    I've structured the code in an MVC pattern to manage it easily and make it 
    scalable. For the database, I use MongoDB and the MongoDB Golang Driver. 
    Each API is thoroughly validated and written in an easily understandable way.
+   It was created for my FYP project.
    Below are the instructions on how to run the backend:
 </p>
 <ul>
